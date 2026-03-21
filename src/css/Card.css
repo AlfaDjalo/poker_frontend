@@ -1,0 +1,83 @@
+/* Base card styling - uses transform scale for sizing */
+.card {
+  width: 50px;              /* Base card width */
+  aspect-ratio: 2 / 3;      /* Standard playing card ratio */
+  object-fit: cover;
+  border-radius: 0.25rem;
+  border: 1px solid #ccc;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  display: block;
+  transform-origin: center; /* Scale from center by default */
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card.selected {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Empty card slot styling */
+.cardEmpty {
+  width: 50px;
+  aspect-ratio: 2 / 3;
+  display: block;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  background-color: transparent;
+  transform-origin: center;
+}
+
+/* .cardEmpty {
+  width: 50px;
+  aspect-ratio: 2 / 3;
+  background-color: transparent;
+  display: inline-block;
+  transform-origin: center;
+} */
+
+.cardEmpty-outline {
+  border: 1px dashed #999;
+  border-radius: 0.25rem;
+}
+
+
+/* Optional: Scale from left for overlapping hands */
+.card.scale-left {
+  transform-origin: left center;
+}
+
+.cardEmpty.scale-left {
+  transform-origin: left center;
+}
+
+/* Responsive adjustments for very small screens */
+@media (max-width: 480px) {
+  .card {
+    width: 45px;            /* Smaller base size on very small screens */
+  }
+  
+  .cardEmpty {
+    width: 45px;
+  }
+}
+
+/* Very large screens - prevent cards from getting too big */
+@media (min-width: 1920px) {
+  .card {
+    width: 70px;            /* Slightly larger base on very large screens */
+  }
+  
+  .cardEmpty {
+    width: 70px;
+  }
+}
+
+.card-target {
+  outline: 2px dashed #007bff;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}

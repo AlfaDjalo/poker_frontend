@@ -1,121 +1,129 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from 'react';
+
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { startNewHand } from "./api/pokerApi";
+import PokerTable from "./components/PokerTable";
+
+// import PokerHandAnalyzer from './PokerHandAnalyzer';
+// import PushFoldGrid from './components/PushFoldGrid';
+// import EquityCalculator from './components/EquityCalculator';
+// import CardSelector from './components/CardSelector';
+// import ViewEmbeddings from './components/ViewEmbeddings';
+// import GameSimulator from './components/GameSimulator';
+// import { Navbar } from "./components/Navbar";
+// import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [gameState, setGameState] = useState(null);
+
+  const handleStartGame = async () => {
+    try {
+      const data = await startNewHand();
+      
+      const playersBySeat = {};
+      data.players.forEach(p => {
+        playersBySeat[p.seat] = p;
+      });
+
+      setGameState({
+        ...data,
+        players: playersBySeat
+      });
+    } catch (error) {
+      console.error("Failed to start game:", error)
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Router>
+      {/* Always visible */}
+      {/* <Navbar /> */}
 
-      <div className="ticks"></div>
+        <div className="pt-16">
+          {/* <Routes> */}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            <h1>Crazy Asian Poker</h1>
+            <button onClick={handleStartGame}>Start New Hand</button>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            {gameState && (
+              <PokerTable
+                players={gameState.players}
+                boardCards={gameState.board}
+                dealerSeat={1}
+                onSeatClick={() => {}}
+                onPlayerCardClick={() => {}}
+                onPlayerSlotClick={() => {}}
+                onBoardCardClick={() => {}}
+                onBoardSlotClick={() => {}}
+                onBoardAreaClick={() => {}}
+                loading={false}
+              />
+            )}
+
+            {/* Equity Calculator */}
+            {/* <Route
+              path="/"
+              element={
+                <div>
+                  <CardSelector />
+                </div>
+              }
+            /> */}
+
+            {/* Rank Chart */}
+            {/* <Route
+              path="/rank_chart"
+              element={
+                <div>
+                  <PokerHandAnalyzer />
+                </div>
+              }
+            /> */}
+
+            {/* Push-Fold Grid */}
+            {/* <Route
+              path="/pushfold_grid"
+              element={
+                <div>
+                  <PushFoldGrid />
+                </div>
+              }
+            /> */}
+
+            {/* View Embeddings */}
+            {/* <Route
+              path="/view_embeddings"
+              element={
+                <div>
+                  <ViewEmbeddings />
+                </div>
+              }
+            /> */}
+
+            {/* Equity Calculator */}
+            {/* <Route
+              path="/equity_calculator"
+              element={
+                <div>
+                  <EquityCalculator />
+                </div>
+              }
+            /> */}
+
+            {/* Game Simulator */}
+            {/* <Route
+              path="/game_simulator"
+              element={
+                <div>
+                  <GameSimulator />
+                </div>
+              }
+            /> */}
+          {/* </Routes> */}
+        </div >
+    </Router>
+  );
 }
 
-export default App
+export default App;
