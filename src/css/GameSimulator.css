@@ -1,0 +1,15 @@
+.pot.push {
+    animation: potPush 0.8s ease-out;
+}
+
+@keyframes potPush {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+.hand-strength {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ffd700;
+}

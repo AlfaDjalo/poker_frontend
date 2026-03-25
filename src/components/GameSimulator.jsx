@@ -1,191 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import PokerTable from "./PokerTable";
-// import PlayerActionPanel from "./PlayerActionPanel";
-// import { startNewHand, createNewHand, dealHoleCards, payBlinds, getNextActiveSeat, foldPlayer, placeBet, callBet, check, isBettingRoundComplete, getAvailableActions, endStreet } from "../utils/handUtils";
-// import { dealBoardCards } from "../utils/boardUtils";
-// import { evaluateShowdown } from "../utils/api";
-// import { defaultPlayers, defaultBlinds, numHoleCards, numBoardCards } from "../config/GameConfig";
+
+import { restart, startNewHand, sendAction } from '../api/pokerApi';
+import PlayerActionPanel from "./PlayerActionPanel";
+import GameStatusBar from "./GameStatusBar";
+
+import "../css/GameSimulator.css";
+
+// import { Play } from 'lucide-react';
+
+const STREET_NAMES = {
+    0: "Preflop",
+    1: "Flop",
+    2: "Turn",
+    3: "River",
+    4: "Showdown"
+};
 
 const GameSimulator = () =>
 {
     const [hand, setHand] = useState(null);
-    const [availableActions, setAvailableActions] = useState([]);
-    const [showdownResult, setShowdownResult] = useState(null);
+    // const [availableActions, setAvailableActions] = useState([]);
+    const isHandOver = hand?.phase === "HAND_COMPLETE";
+    const availableActions = hand?.available_actions || [];
+
+    const [prevPot, setPrevPot] = useState(0);
+    const [animatePot, setAnimatePot] = useState(false);
+
+    useEffect(() => {
+        if (!hand) return;
+
+        if (prevPot > 0 && hand.pot === 0) {
+        setAnimatePot(true);
+        setTimeout(() => setAnimatePot(false), 800);
+        }
+
+        setPrevPot(hand.pot);
+    }, [hand])
+
+    // const availableActions = hand?.availableActions || [];
+    // const actionSeat = hand?.current_player;
+
+    // const [showdownResult, setShowdownResult] = useState(null);
     
     // const [config, setConfig] = useState(GameConfigDefaults);
 
     // <GameConfig onSave={setConfig} />
 
-    const handleNewHand = () => {
-      const newHand = startNewHand(defaultPlayers, defaultBlinds, numHoleCards, numBoardCards);
-      setHand(newHand);
-    //   setAvailableActions();
+    const handleRestart = async () => {
+        const newHand = await restart();
+        setHand(newHand);
     };
     
-    // const [players, setPlayers] = useState({
-        //     1: { seat: 1, name: "Alice", stack: 2000, isActive: true },
-        //     2: { seat: 2, name: "Bob", stack: 2000, isActive: true },
-        //     3: { seat: 3, name: "Charlie", stack: 2000, isActive: true },
-        //     4: { seat: 4, name: "Dave", stack: 2000, isActive: true },
-        // });    
-        // const [actionPlayer, setActionPlayer] = useState(null);
-        // const [actionPlayer, setActionPlayer] = useState(getNextActiveSeat(hand.players, hand.dealerSeat));
-
-        // const numBoardCards = [0, 3, 1, 1];
-        // const blinds = [1, 2];
-
-    // const handleNewHand = () => {
-    //     let handObj = createNewHand({ playerInput: players, numCards: 4 });
-    //     // let newHand = createNewHand({ numPlayers: 6, startingStack: 200, numCards: 4 });
-    //     handObj = dealHoleCards(handObj, 4);
-    //     handObj = payBlinds(handObj, blinds);
-    //     setHand(handObj);
-
-    //     setActionPlayer(handObj.nextToAct)
-    //     setAvailableActions(getAvailableActions(handObj, handObj.nextToAct));
-
-    //     console.log("Updated hand: ", handObj);
-    //     console.log("Action player: ", actionPlayer);
-
-    // };
-
-    const handleDeal = () => {
-        // if (!hand) return;
-        // const dealt = dealHoleCards(hand, 4);
-        // setHand(dealt);
-        // console.log("Dealt hand: ", Object.values(dealt.players).map(p => ({ seat: p.seat, hand: p.hand })));
-    };    
-
-    function advanceToNextStreet(currentHand) {
-        // if (!currentHand) return;
-        
-        // let newHand = endStreet(currentHand);
-        // const cardsToDeal = numBoardCards[newHand.street] || 0;
-
-        // newHand = dealBoardCards(newHand, cardsToDeal);
-
-        // const nextSeat = getNextActiveSeat(newHand.players, newHand.dealer);
-        // newHand.betting.lastAggressor = nextSeat;
-        // newHand.nextToAct = nextSeat;
-
-        // // setHand(newHand);
-        // // setActionPlayer(nextSeat);
-        // // setAvailableActions(getAvailableActions(newHand, nextSeat));
-
-        // console.log(`Moved to street: ${newHand.street}, next to act: ${newHand.nextToAct} `);
-
-        // return newHand;
-    }
-
-    const handleDealBoard = () => {
-        // if (!hand) return;
-        // const nextStreet = hand.street + 1;
-        // if (nextStreet > numBoardCards.length - 1) return;
-        // const numCards = numBoardCards[nextStreet] || 0; 
-        // const newHand = { ...hand, street: nextStreet };
-        // const updated = dealBoardCards(newHand, numCards);
-        // setHand({ ...updated });
-
-        // console.log("Updated board: ", Object.values(updated.board));
-    }    
-
-    const handleShowdown = async () => {
-        // if (!hand) return;
-        // if (hand.street < numBoardCards.length - 1) return;
-
-        // const playerHands = Object.values(hand.players).map(p => ( p.hand.map(c => c.card) ));
-        // const board = hand.board.map(c => c.card);
-
-        // console.log("Showdown");
-
-        // try {
-        //     const result = await evaluateShowdown(playerHands, board);
-
-        //     console.log(result);
-
-        //     const seats = Object.keys(hand.players);
-        //     const updatedPlayers = { ...hand.players };
-        //     seats.forEach((seat, idx) => {
-        //         updatedPlayers[seat] = {
-        //             ...updatedPlayers[seat],
-        //             equity: result.equities[idx] * 100
-        //         };
-        //     });
-
-        //     setHand(prev => ({ ...prev, players: updatedPlayers }));
-        //     setShowdownResult(result.equities);
-        //     console.log("Showdown result: ", result);
-        // } catch (err) {
-        //     console.error(err);
-        // }
+    const handleNewHand = async () => {
+        const newHand = await startNewHand();
+        setHand(newHand);
     };
-
-    const handlePlayerAction = (type, amount) => {
-        // let newHand = hand;
-
-        // console.log("Player action: ", type, " Amount: ", amount);
-
-        // switch(type) {
-        //     case "fold":
-        //         newHand = foldPlayer(hand, actionPlayer);
-        //         break;
-        //     case "bet":
-        //         newHand = placeBet(hand, actionPlayer, hand.betting.currentBet);
-        //         break;
-        //     case "check":
-        //         newHand = check(hand, actionPlayer);
-        //         break;
-        //     case "call":
-        //         newHand = callBet(hand, actionPlayer, amount);
-        //         break;
-        //     default:
-        //         console.log("Dodgy action type: ", type);
-        //         break;
-        // }
-
-        // setHand(newHand);
-
-        // const nextSeat = getNextActiveSeat(newHand.players, actionPlayer);
-        // setActionPlayer(nextSeat);
-
-        // console.log("Action completed.")
-
-        // if (isBettingRoundComplete(newHand, nextSeat)) {
-        //     // Next street.
-        //     console.log("Betting round complete.")
-
-        //     const progressedHand = advanceToNextStreet(newHand);
-        //     setHand(progressedHand);
-        //     setActionPlayer(progressedHand.nextToAct);
-        //     setAvailableActions(getAvailableActions(progressedHand, progressedHand.nextToAct));
-
-        //     // const handleEndStreet = endStreet(hand);
-        //     // setHand(handleEndStreet);
-
-        //     // handleDealBoard();
-        // }
+    
+    const handlePlayerAction = async (type, amount) => {
+        const updated = await sendAction(type, amount);
+        setHand(updated);
     }
+
+    const actionPlayer = 
+        hand?.phase === "BETTING"
+        ? hand.current_player
+        : null;
+
+    const player = 
+        actionPlayer != null && hand?.players?.[actionPlayer]
+            ? hand.players[actionPlayer] 
+            : null;
+
+    console.log("IsHandOver: ", isHandOver)
+    console.log("AvailableActions: ", availableActions)
+    console.log("Hand: ", hand)
+    console.log("actionPlayer", actionPlayer)
+    console.log("players", hand?.players)
+    
+    // useEffect(() => {
+    //     if (!hand) return;
+
+    //     setAvailableActions(["fold", "check", "call", "bet", "raise"]);
+    // }, [hand]);
 
     return (
         <div style={{ padding: 16 }}>
             <h3> Game Simulator </h3>   
-            <button onClick={ handleNewHand }>Create New Hand</button>
+            <button onClick={() => handleRestart()}>Restart</button>
+            <button onClick={() => handleNewHand()}>Start New Hand</button>
+            {/* <button onClick={() => handlePlayerAction("fold")}>Fold</button>
+            <button onClick={() => handlePlayerAction("check")}>Check</button>
+            <button onClick={() => handlePlayerAction("call")}>Call</button>
+            <button onClick={() => handlePlayerAction("bet", 10)}>Bet 10</button>
+            <button onClick={() => handlePlayerAction("raise", 20)}>Raise 20</button> */}
+            {/* <button onClick={ handleNewHand }>Create New Hand</button>
             <button onClick={ handleDeal }>Deal Hole Cards</button>
             <button onClick={ handleDealBoard }>Deal Next Street</button>
-            <button onClick={ handleShowdown }>Showdown</button>
+            <button onClick={ handleShowdown }>Showdown</button> */}
 
             { console.log("Rendering PokerTable, boardCards =", hand?.board)}
             { console.log("Rendering PokerTable, players =", hand?.players)}
-            <div>Pot</div>
-            <div>{hand ? hand.pot : 0}</div>
+            <GameStatusBar hand={hand} />
+            <div className={`pot ${animatePot ? "push" : ""}`}>
+                {/* ${hand.pot} */}
+                Pot: {hand ? hand.pot : 0}
+            </div> 
             <div>Street</div>
-            <div>{hand ? hand.street : 0}</div>
+            <div>{hand ? STREET_NAMES[hand?.street] : 0}</div>
+            {/* {hand.phase === "HAND_COMPLETE" && hand.hand_strengths && (
+                <div className="hand-strength">
+                    {hand.hand_strengths[actionPlayer - 1]}
+                </div>
+            )} */}
+            {/* <div>{hand ? hand.street : 0}</div> */}
             <PokerTable
                 players={hand ? hand.players : {}}
                 boardCards={hand ? hand.board : []}
                 dealerSeat={1}              // or hand?.dealerButton if you add it later
                 // activeTarget={ actionPlayer ? { type: "player", seat: actionPlayer } : null }         // placeholder until you wire DnD targeting
+                actionSeat={actionPlayer}
                 onSeatClick={(seatNum) => console.log("Seat clicked:", seatNum)}
                 onPlayerCardClick={(seatNum, cardIndex) =>
                     console.log(`Clicked player ${seatNum} card ${cardIndex}`)
@@ -202,6 +137,17 @@ const GameSimulator = () =>
                 onBoardAreaClick={() => console.log("Board area clicked")}
                 loading={false}
             />
+
+            { player && (
+                <PlayerActionPanel
+                    player={player}
+                    availableActions={availableActions}
+                    minRaise={hand?.min_raise}
+                    maxRaise={hand?.max_raise}
+                    disabled={isHandOver}
+                    onAction={handlePlayerAction}
+                />
+            )}
 
             {
                 // actionPlayer && hand.players[actionPlayer] && (

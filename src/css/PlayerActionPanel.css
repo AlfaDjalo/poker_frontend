@@ -1,0 +1,62 @@
+.player-action-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  background: #1e1e1e;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.player-action-panel button {
+  min-width: 80px;
+  font-weight: 600;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.player-action-panel button:active {
+  transform: scale(0.97);
+}
+
+.player-action-panel input[type="number"] {
+  width: 80px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #888;
+  border-radius: 0.4rem;
+  background: #222;
+  color: white;
+}
+
+/* Button states */
+.player-action-panel .fold {
+  background-color: #e74c3c;
+}
+.player-action-panel .fold:hover {
+  background-color: #c0392b;
+}
+
+.player-action-panel .call {
+  background-color: #3498db;
+}
+.player-action-panel .call:hover {
+  background-color: #2c80b4;
+}
+
+.player-action-panel .bet {
+  background-color: #27ae60;
+}
+.player-action-panel .bet:hover {
+  background-color: #1e874b;
+}
+
+.player-action-panel .disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.5;
+}

@@ -9,7 +9,8 @@ const PokerTable = ({
   boardCards,
   dealerSeat,
   activeTarget,
-  actionSeat=1,
+  actionSeat,
+  // actionSeat=1,
   onSeatClick,
   onPlayerCardClick,
   onPlayerSlotClick,
@@ -18,11 +19,6 @@ const PokerTable = ({
   onBoardAreaClick,
   loading
 }) => {
-
-  // const { setNodeRef, isOver } = useDroppable({
-  //   id: "table-inner",
-  //   data: { type: "table-inner" },
-  // });
 
   console.log("Players: ", players)
 
@@ -66,7 +62,9 @@ const PokerTable = ({
                 // key={seatNum}
                 seatNumber={seatNum}
                 player={players[seatNum]}
-                isActive={activeTarget?.type === "player" && activeTarget.seat === seatNum}
+                isActive={seatNum === actionSeat}
+                // isActive={activeTarget?.type === "player" && actionSeat === seatNum}
+                // isActive={activeTarget?.type === "player" && activeTarget.seat === seatNum}
                 activeSlot={activeTarget?.type === "player" && activeTarget.seat === seatNum ? activeTarget.slot : null}
                 onCardClick={(cardIndex) => onPlayerCardClick(seatNum, cardIndex)}
                 onSlotClick={(slotIndex) => onPlayerSlotClick(seatNum, slotIndex)}

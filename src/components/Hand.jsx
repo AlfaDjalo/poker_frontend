@@ -12,7 +12,7 @@ const Hand = ({
   activeSlot, 
   onCardClick, 
   onSlotClick, 
-  maxCards = 4
+  maxCards
 }) => {
   // Create array with empty slots
   const slots = Array.from({ length: maxCards }, (_, index) => 

@@ -1,39 +1,69 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React from 'react';
 
-import { useState } from 'react'
-import { startNewHand } from "./api/pokerApi";
-import PokerTable from "./components/PokerTable";
+// import { useState } from 'react'
+// import { dealNextStreet, startNewHand } from "./api/pokerApi";
+// import PokerTable from "./components/PokerTable";
+// import { sendAction } from "./api/pokerApi";
 
-// import PokerHandAnalyzer from './PokerHandAnalyzer';
-// import PushFoldGrid from './components/PushFoldGrid';
-// import EquityCalculator from './components/EquityCalculator';
-// import CardSelector from './components/CardSelector';
-// import ViewEmbeddings from './components/ViewEmbeddings';
-// import GameSimulator from './components/GameSimulator';
-// import { Navbar } from "./components/Navbar";
+import GameSimulator from './components/GameSimulator';
 // import './App.css';
 
 function App() {
-  const [gameState, setGameState] = useState(null);
+  // const [gameState, setGameState] = useState(null);
 
-  const handleStartGame = async () => {
-    try {
-      const data = await startNewHand();
+  // const handleStartGame = async () => {
+  //   try {
+  //     const data = await startNewHand();
       
-      const playersBySeat = {};
-      data.players.forEach(p => {
-        playersBySeat[p.seat] = p;
-      });
+      // const playersBySeat = {};
+      // data.players.forEach(p => {
+      //   playersBySeat[p.seat] = p;
+      // });
 
-      setGameState({
-        ...data,
-        players: playersBySeat
-      });
-    } catch (error) {
-      console.error("Failed to start game:", error)
-    }
-  };
+  //     setGameState({
+  //       data
+  //       // ...data,
+  //       // players: playersBySeat
+  //       // players: playersBySeat
+  //     });
+  //   } catch (error) {
+  //     console.error("Failed to start game:", error)
+  //   }
+  // };
+
+  // const handleDealNextStreet = async () => {
+  //   try {
+  //     const updatedHand = await dealNextStreet();
+  //     setGameState({
+  //       ...uppdatedHand,
+  //       players: updatedHand.players.reduce((acc, p) => {
+  //         acc[p.seat] = p;
+  //         return acc;
+  //       }, {})
+  //     });
+  //   } catch (err) {
+  //     console.error("Failed to deal board:", err);
+  //   }
+  // };
+
+  // const handleAction = async (type, amount = null) => {
+  //   try {
+  //     const updated = await sendAction(type, amount);
+
+  //     const playersBySeat = {};
+  //     updated.players.forEach(p => {
+  //       playersBySeat[p.seat] = p;
+  //     });
+
+  //     setGameState({
+  //       ...updated,
+  //       players: playersBySeat
+  //     });
+  //   } catch (err) {
+  //     console.error("Action failed:", err);
+  //   }
+  // };
 
   return (
     <Router>
@@ -41,86 +71,21 @@ function App() {
       {/* <Navbar /> */}
 
         <div className="pt-16">
-          {/* <Routes> */}
+        <h1>Crazy Asian Poker</h1>
 
-            <h1>Crazy Asian Poker</h1>
-            <button onClick={handleStartGame}>Start New Hand</button>
-
-            {gameState && (
-              <PokerTable
-                players={gameState.players}
-                boardCards={gameState.board}
-                dealerSeat={1}
-                onSeatClick={() => {}}
-                onPlayerCardClick={() => {}}
-                onPlayerSlotClick={() => {}}
-                onBoardCardClick={() => {}}
-                onBoardSlotClick={() => {}}
-                onBoardAreaClick={() => {}}
-                loading={false}
-              />
-            )}
-
-            {/* Equity Calculator */}
-            {/* <Route
-              path="/"
-              element={
-                <div>
-                  <CardSelector />
-                </div>
-              }
-            /> */}
-
-            {/* Rank Chart */}
-            {/* <Route
-              path="/rank_chart"
-              element={
-                <div>
-                  <PokerHandAnalyzer />
-                </div>
-              }
-            /> */}
-
-            {/* Push-Fold Grid */}
-            {/* <Route
-              path="/pushfold_grid"
-              element={
-                <div>
-                  <PushFoldGrid />
-                </div>
-              }
-            /> */}
-
-            {/* View Embeddings */}
-            {/* <Route
-              path="/view_embeddings"
-              element={
-                <div>
-                  <ViewEmbeddings />
-                </div>
-              }
-            /> */}
-
-            {/* Equity Calculator */}
-            {/* <Route
-              path="/equity_calculator"
-              element={
-                <div>
-                  <EquityCalculator />
-                </div>
-              }
-            /> */}
-
+        {/* <button onClick={handleStartGame}>Start New Hand</button> */}
+          <Routes>
             {/* Game Simulator */}
-            {/* <Route
-              path="/game_simulator"
+            <Route
+              path="/"
+              // path="/game_simulator"
               element={
                 <div>
                   <GameSimulator />
                 </div>
               }
-            /> */}
-          {/* </Routes> */}
+            />
+          </Routes>
         </div >
     </Router>
   );

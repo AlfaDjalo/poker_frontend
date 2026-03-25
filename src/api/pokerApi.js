@@ -8,14 +8,22 @@ function wrapCards(cardStrings) {
     }));
 }
 
+function normalizePlayers(playersArray) {
+    const bySeat = {};
+    playersArray.forEach(p => {
+        bySeat[p.seat] = {
+            ...p,
+            hand: wrapCards(p.hand || [])
+        };
+    });
+    return bySeat;
+}
+
 function formatHandData(rawHand) {
     return {
         ...rawHand,
-        players: rawHand.players.map(player => ({
-            ...player,
-            hand: wrapCards(player.hand || [])
-        })),
-        board: wrapCards(rawHand.board || [])
+        players: normalizePlayers(rawHand.players || []),
+        board: wrapCards(rawHand.board || []),
     };
 }
 
@@ -23,7 +31,44 @@ export const startNewHand = async () => {
     const response = await fetch(`${API_BASE_URL}/game/new-hand`, {
         method: 'POST',
     });
+
     if (!response.ok) throw new Error('Network response was not ok');
+    
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
+export const restart = async () => {
+    const response = await fetch(`${API_BASE_URL}/game/restart`, {
+        method: 'POST',
+    });
+
+    if (!response.ok) throw new Error('Network response was not ok');
+    
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
+export const dealNextStreet = async () => {
+    const response = await fetch(`${API_BASE_URL}/game/deal_next_street`, {
+        method: 'POST'
+    });
+    if (!response.ok) throw new Error("Network response was not ok");
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
+export const sendAction = async(type, amount = null) => {
+    const response = await fetch(`${API_BASE_URL}/game/action`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ type, amount })
+    });
+
+    if (!response.ok) throw new Error("Network response was not ok");
+
     const rawHand = await response.json();
     return formatHandData(rawHand);
 };
