@@ -34,9 +34,9 @@ const PlayerActionPanel = ({
     }, [availableActions]);
     // }, [player?.seat, player?.contributionCurrentStreet]);
 
-    console.log("Available actions for", player?.name, availableActions);
-    console.log("player", player);
-    console.log("Disabled: ", disabled)
+    // console.log("Available actions for", player?.name, availableActions);
+    // console.log("player", player);
+    // console.log("Disabled: ", disabled)
 
     return (
         <div className="player-action-panel">

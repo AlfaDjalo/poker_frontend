@@ -27,7 +27,7 @@ const DroppableSlot = ({
   //   console.log(`DroppableSlot mounted: ${variant}-slot-${index}`);
   // }, [index]);
 
-  console.log("CardObj: ", cardObj);
+  // console.log("CardObj: ", cardObj);
 
   return (
     <div

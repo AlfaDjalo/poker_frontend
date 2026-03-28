@@ -20,7 +20,7 @@ const PokerTable = ({
   loading
 }) => {
 
-  console.log("Players: ", players)
+  // console.log("Players: ", players)
 
   return (
     <div className="poker-table-container">

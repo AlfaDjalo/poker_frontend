@@ -5,6 +5,7 @@ import PokerTable from "./PokerTable";
 import { restart, startNewHand, sendAction } from '../api/pokerApi';
 import PlayerActionPanel from "./PlayerActionPanel";
 import GameStatusBar from "./GameStatusBar";
+import WinnerBanner from "./WinnerBanner";
 
 import "../css/GameSimulator.css";
 
@@ -27,9 +28,21 @@ const GameSimulator = () =>
 
     const [prevPot, setPrevPot] = useState(0);
     const [animatePot, setAnimatePot] = useState(false);
+    const [showWinner, setShowWinner] = useState(false);
 
     useEffect(() => {
         if (!hand) return;
+
+        console.log("AvailableActions: ", availableActions)
+        console.log("Hand: ", hand)
+        console.log("actionPlayer", actionPlayer)
+        console.log("players", hand?.players)
+        console.log("Phase from backend: ", hand?.phase)
+        
+    
+        if ((hand.phase === "SHOWDOWN" || hand.phase === "HAND_COMPLETE") && hand.winners?.length) {
+            setShowWinner(true);
+        }
 
         if (prevPot > 0 && hand.pot === 0) {
         setAnimatePot(true);
@@ -38,15 +51,6 @@ const GameSimulator = () =>
 
         setPrevPot(hand.pot);
     }, [hand])
-
-    // const availableActions = hand?.availableActions || [];
-    // const actionSeat = hand?.current_player;
-
-    // const [showdownResult, setShowdownResult] = useState(null);
-    
-    // const [config, setConfig] = useState(GameConfigDefaults);
-
-    // <GameConfig onSave={setConfig} />
 
     const handleRestart = async () => {
         const newHand = await restart();
@@ -73,35 +77,13 @@ const GameSimulator = () =>
             ? hand.players[actionPlayer] 
             : null;
 
-    console.log("IsHandOver: ", isHandOver)
-    console.log("AvailableActions: ", availableActions)
-    console.log("Hand: ", hand)
-    console.log("actionPlayer", actionPlayer)
-    console.log("players", hand?.players)
-    
-    // useEffect(() => {
-    //     if (!hand) return;
-
-    //     setAvailableActions(["fold", "check", "call", "bet", "raise"]);
-    // }, [hand]);
-
     return (
         <div style={{ padding: 16 }}>
             <h3> Game Simulator </h3>   
             <button onClick={() => handleRestart()}>Restart</button>
             <button onClick={() => handleNewHand()}>Start New Hand</button>
-            {/* <button onClick={() => handlePlayerAction("fold")}>Fold</button>
-            <button onClick={() => handlePlayerAction("check")}>Check</button>
-            <button onClick={() => handlePlayerAction("call")}>Call</button>
-            <button onClick={() => handlePlayerAction("bet", 10)}>Bet 10</button>
-            <button onClick={() => handlePlayerAction("raise", 20)}>Raise 20</button> */}
-            {/* <button onClick={ handleNewHand }>Create New Hand</button>
-            <button onClick={ handleDeal }>Deal Hole Cards</button>
-            <button onClick={ handleDealBoard }>Deal Next Street</button>
-            <button onClick={ handleShowdown }>Showdown</button> */}
-
-            { console.log("Rendering PokerTable, boardCards =", hand?.board)}
-            { console.log("Rendering PokerTable, players =", hand?.players)}
+            {/* { console.log("Rendering PokerTable, boardCards =", hand?.board)}
+            { console.log("Rendering PokerTable, players =", hand?.players)} */}
             <GameStatusBar hand={hand} />
             <div className={`pot ${animatePot ? "push" : ""}`}>
                 {/* ${hand.pot} */}
@@ -109,12 +91,18 @@ const GameSimulator = () =>
             </div> 
             <div>Street</div>
             <div>{hand ? STREET_NAMES[hand?.street] : 0}</div>
-            {/* {hand.phase === "HAND_COMPLETE" && hand.hand_strengths && (
-                <div className="hand-strength">
-                    {hand.hand_strengths[actionPlayer - 1]}
-                </div>
+            
+            { showWinner && (
+                <WinnerBanner
+                    hand={hand}
+                    onClose={() => setShowWinner(false)}
+                />
+            )}
+            {/* {hand.phase === "SHOWDOWN" && ( */}
+            {/* {(hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE") && (
+                <WinnerBanner hand={hand}/>
             )} */}
-            {/* <div>{hand ? hand.street : 0}</div> */}
+
             <PokerTable
                 players={hand ? hand.players : {}}
                 boardCards={hand ? hand.board : []}
@@ -149,16 +137,6 @@ const GameSimulator = () =>
                 />
             )}
 
-            {
-                // actionPlayer && hand.players[actionPlayer] && (
-                //     <PlayerActionPanel 
-                //     hand={hand}
-                //     player={hand.players[actionPlayer]}
-                //     availableActions={availableActions}
-                //     onAction={(type, amount) => handlePlayerAction(type, amount)}
-                //     />
-                // )
-            }
         </div>
     );
 };

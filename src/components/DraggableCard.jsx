@@ -43,7 +43,7 @@ const DraggableCard = ({ id, source, children, onClick }) => {
     position: isDragging ? "relative" : "static", // relative so z-index works
   };
 
-  console.log("DraggableCard: ", id);
+  // console.log("DraggableCard: ", id);
 
   return (
     <div

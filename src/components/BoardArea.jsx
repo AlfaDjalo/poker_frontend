@@ -20,9 +20,9 @@ const BoardArea = ({
     cards[index] || null
   );
 
-  React.useEffect(() => {
-    console.log("BoardArea droppable mounted: board-area");
-  }, []);
+  // React.useEffect(() => {
+  //   console.log("BoardArea droppable mounted: board-area");
+  // }, []);
 
   return (
     // <div className="board-area" onClick={onAreaClick}>

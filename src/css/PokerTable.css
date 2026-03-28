@@ -1,5 +1,6 @@
 /* Poker table container - mahogany background */
 .poker-table-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -37,7 +37,7 @@ const PlayerSeat = ({
             <span className="player-name">{player.name}</span>
             <span className="player-stack">${player.stack}</span>
           </div>
-          {console.log(player.hand)}
+          {/* {console.log(player.hand)} */}
           <Hand 
             seatNumber={seatNumber}
             cards={player.hand}

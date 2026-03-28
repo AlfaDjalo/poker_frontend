@@ -25,7 +25,7 @@ const Hand = ({
   //   // data: { type: "board-area" },
   // });
 
-  console.log("Hand: ", cards);
+  // console.log("Hand: ", cards);
 
   return (
     <div
