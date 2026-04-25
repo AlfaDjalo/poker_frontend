@@ -1,7 +1,7 @@
 const API_BASE_URL = "http://127.0.0.1:8000"
 
 function wrapCards(cardStrings) {
-    return cardStrings.map(card => ({
+    return (cardStrings || []).map(card => ({
         card,
         hidden: false,
         selected: false
@@ -10,7 +10,7 @@ function wrapCards(cardStrings) {
 
 function normalizePlayers(playersArray) {
     const bySeat = {};
-    playersArray.forEach(p => {
+    (playersArray || []).forEach(p => {
         bySeat[p.seat] = {
             ...p,
             hand: wrapCards(p.hand || [])
@@ -22,8 +22,12 @@ function normalizePlayers(playersArray) {
 function formatHandData(rawHand) {
     return {
         ...rawHand,
-        players: normalizePlayers(rawHand.players || []),
         board: wrapCards(rawHand.board || []),
+        nodes: wrapCards(rawHand.nodes || []),
+        points: rawHand.point || [],
+        layout_name: rawHand.layout_name || null,
+        game_name: rawHand.game_name || null,
+        players: normalizePlayers(rawHand.players || []),
     };
 }
 
@@ -49,14 +53,14 @@ export const restart = async () => {
     return formatHandData(rawHand);
 };
 
-export const dealNextStreet = async () => {
-    const response = await fetch(`${API_BASE_URL}/game/deal_next_street`, {
-        method: 'POST'
-    });
-    if (!response.ok) throw new Error("Network response was not ok");
-    const rawHand = await response.json();
-    return formatHandData(rawHand);
-};
+// export const dealNextStreet = async () => {
+//     const response = await fetch(`${API_BASE_URL}/game/deal_next_street`, {
+//         method: 'POST'
+//     });
+//     if (!response.ok) throw new Error("Network response was not ok");
+//     const rawHand = await response.json();
+//     return formatHandData(rawHand);
+// };
 
 export const sendAction = async(type, amount = null) => {
     const response = await fetch(`${API_BASE_URL}/game/action`, {

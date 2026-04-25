@@ -1,0 +1,65 @@
+/* =====================================================
+   CAPBoard — absolute-positioned node card renderer
+   ===================================================== */
+
+   .cap-board {
+    position: relative;
+    width: 100%;
+    /* Height scales with content - parent should give it a min-height */
+    min-height: 200px;
+    height: 100%;
+   }
+
+   /* Individual node slot */
+   .cap-board__node {
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 4px;
+   }
+
+   .cap-board__node:hover {
+    transform: translateY(-3px);
+    z-index: 10;
+   }
+
+   /* Winning node highlight */
+   .cap-board__node--winner {
+    box-shadow: 0 0 0 3px #facc15, 0 0 12px 4px rgba(250, 204, 21, 0.5);
+    border-radius: 5px;
+    z-index: 5;
+   }
+
+   /* Gold dot badge on winning nodes */
+   .cap-board__winner-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #facc15;
+    border: 2px solid #fff;
+    z-index: 6;
+   }
+
+   /* Empty node slot */
+   .cap-board__empty-slot {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+   }
+
+   /* Point label */
+   .cap-board__point-label {
+    position: absolute;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2;
+    transform: translateX(-50%);
+   }

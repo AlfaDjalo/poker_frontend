@@ -1,0 +1,117 @@
+.showdown-summary {
+    background: #0f172a; /* slate-900 */
+    border-radius: 12px;
+    padding: 12px;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Header */
+.showdown-summary__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.showdown-summary__payout-type {
+    font-size: 12px;
+    background: #1e293b;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+/* Hint */
+.showdown-summary__hint {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+
+/* Point cards */
+.showdown-summary__point {
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.showdown-summary__point:hover {
+    border-color: #3b82f6;
+    background: #22304a;
+}
+
+.showdown-summary__point.active {
+    border-color: #60a5fa;
+    background: #1d4ed8;
+}
+
+/* Point title */
+.showdown-summary__point-name {
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+/* Board row */
+.showdown-summary__board {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+/* Winners */
+.showdown-summary__winner {
+    background: #22c55e;
+    color: #022c22;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+/* No qualify */
+.showdown-summary__no-qualify {
+    color: #f87171;
+    font-size: 12px;
+}
+
+/* Points section */
+.showdown-summary__tallies {
+    background: #1e293b;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.showdown-summary__tally-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.showdown-summary__tally-row.winner {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* Payouts */
+.showdown-summary__payouts {
+    background: #1e293b;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.showdown-summary__payout-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.showdown-summary__amount {
+    color: #4ade80;
+}

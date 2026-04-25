@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import PlayerSeat from "./PlayerSeat";
-import BoardArea from "./BoardArea";
+import CAPBoard from "./CAPBoard";
+// import BoardArea from "./BoardArea";
 import "../css/PokerTable.css";
 import { useDroppable } from "@dnd-kit/core";
 
 const PokerTable = ({ 
   players,
   boardCards,
+  nodes,
+  layoutName,
+  points,
+  showdown,
   dealerSeat,
   activeTarget,
   actionSeat,
@@ -19,7 +24,15 @@ const PokerTable = ({
   onBoardAreaClick,
   loading
 }) => {
+  const boardNodes = nodes?.length ? nodes : (boardCards || []);
+  // const boardNodes = nodes?.length
+  //   ? nodes
+  //   : (boardCards || []).map(c => c?.card ?? null);
 
+  // console.log("BoardCards: ", boardCards)
+  console.log("Nodes: ", nodes)
+  console.log("BoardNodes: ", boardNodes)
+  console.log("LayoutName: ", layoutName)
   // console.log("Players: ", players)
 
   return (
@@ -36,8 +49,16 @@ const PokerTable = ({
             // }`}
             onClick={onBoardAreaClick}
           >
-            <div className="board-container">
-              <BoardArea
+            <div className="board-container cap-board-wrapper">
+                <CAPBoard
+                  nodes={boardNodes}
+                  layoutName={layoutName || "single_board"}
+                  points={points || []}
+                  showdown={showdown}
+                  onNodeClick={onBoardCardClick}
+                  onNodeSlotClick={onBoardSlotClick}
+                />
+              {/* <BoardArea
                 cards={boardCards}
                 scale={1.0}
                 showSlots={true}
@@ -46,7 +67,7 @@ const PokerTable = ({
                 onCardClick={onBoardCardClick}
                 onAreaClick={onBoardAreaClick}
                 maxCards={5}
-              />
+              /> */}
             </div>
           </div>
         </div>

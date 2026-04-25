@@ -1,0 +1,62 @@
+.point-detail {
+    background: #020617;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #1e293b;
+}
+
+/* Title */
+.point-detail__title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Board section */
+.point-detail__board {
+    margin-bottom: 12px;
+}
+
+/* Player row */
+.point-detail__row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-radius: 8px;
+    background: #1e293b;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.point-detail__row:hover {
+    background: #334155;
+}
+
+.point-detail__row.active {
+    outline: 2px solid #60a5fa;
+}
+
+/* Winner highlight */
+.point-detail__row.winner {
+    border-left: 4px solid #22c55e;
+}
+
+/* Hand category */
+.point-detail__category {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Cards */
+.point-detail__cards {
+    display: flex;
+    gap: 4px;
+}
+
+.point-detail__card {
+    font-size: 12px;
+    background: #0f172a;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
