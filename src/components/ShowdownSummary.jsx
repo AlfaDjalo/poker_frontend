@@ -29,33 +29,8 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand }) => {
     
     const playerName = (idx) => playerList[idx]?.name ?? `P${idx + 1}`;
     const playerSeat = (idx) => playerList[idx]?.seat || idx + 1;
-    // const [selectedPoint, setSelectedPoint] = useState(null);
-    // const [selectedBoard, setSelectedBoard] = useState(null);
-
-    // const isPoints = payout_type === "points";
 
     console.log("payout_type: ", payout_type);
-
-
-    // Build player display name from seat map
-    // point_results use 0-based active player indices
-    // players map is 1-based seats — we need to map between them.
-    // The active player ordering matches the players array order from backend.
-    
-    // const playerName = (activeIdx) => {
-    //     const p = playerList[activeIdx];
-    //     return p ? p.name : `P${activeIdx + 1}`;
-    // };
-
-    // const playerSeat = (activeIdx) => {
-    //     const p = playerList[activeIdx];
-    //     return p ? p.seat : activeIdx + 1;
-    // }
-
-    // const isSelected =
-    //     selectedBoard &&
-    //     selectedBoard.pointIdx === idx &&
-    //     selectedBoard.boardIdx === boardIdx;
 
 
     return (
@@ -117,6 +92,7 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand }) => {
                             boardCards: data.board_cards_used
                         });
                     }}
+                    onClose={() => setActivePoint(null)}
                 />
             )}
 
@@ -163,30 +139,8 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand }) => {
 // --------------------------------------------------
 
 function formatPointName(point) {
-    // const name = pointResult.name.replace(/_/g, " ").replace(/\b\w/g, c=> c.toUpperCase());
-    // const type = pointResult.score_type === "HIGH" ? "High"
-    //     : pointResult.score_type === "LOW_27" ? "Low (2-7)"
-    //     : pointResult.score_type ==="LOW_A5" ? "Low (A-5)"
-    //     : pointResult.score_type;
-    // return `${name} -  ${type}`;
     return `${point.name} (${point.score_type})`;
 }
-
-// function formatTally(tally) {
-//     // Show as fraction if not a whole number
-//     if (Number.isInteger(tally)) return `${tally}`;
-//     // Convert to fraction string e.g. 0.5 → "½", 1.5 → "1½"
-//     const  whole = Math.floor(tally);
-//     const frac = tally - whole;
-//     const fracStr =
-//         Math.abs(frac - 0.5)  < 0.01 ? "½" :
-//         Math.abs(frac - 0.25) < 0.01 ? "¼" :
-//         Math.abs(frac - 0.75) < 0.01 ? "¾" :
-//         Math.abs(frac - 0.333) < 0.01 ? "⅓" :
-//         Math.abs(frac - 0.667) < 0.01 ? "⅔" :
-//         frac.toFixed(2);
-//     return whole > 0 ? `${whole}${fracStr}` : fracStr;
-// }
 
 
 export default ShowdownSummary;

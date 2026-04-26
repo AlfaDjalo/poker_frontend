@@ -37,12 +37,6 @@ const GameSimulator = () =>
     useEffect(() => {
         if (!hand) return;
 
-        // console.log("AvailableActions: ", availableActions)
-        // console.log("Hand: ", hand)
-        // console.log("actionPlayer", actionPlayer)
-        // console.log("players", hand?.players)
-        // console.log("Phase from backend: ", hand?.phase)
-        
         if ((hand.phase === "SHOWDOWN" || hand.phase === "HAND_COMPLETE") && hand.winners?.length) {
             setShowWinner(true);
         }
@@ -61,21 +55,16 @@ const GameSimulator = () =>
         }
     }, [isHandOver, hand])
 
-    const handleRestart = async () => setHand(await restart());
-
-    // const handleRestart = async () => {
-    //     const newHand = await restart();
-    //     setHand(newHand);
-    // };
+    const handleRestart = async () => setHandNormalized(await restart());
     
     const handleNewHand = async () => {
         const newHand = await startNewHand();
-        setHand(newHand);
+        setHandNormalized(newHand);
     };
     
     const handlePlayerAction = async (type, amount) => {
         const updated = await sendAction(type, amount);
-        setHand(updated);
+        setHandNormalized(updated);
     }
 
     const actionPlayer = 
@@ -91,25 +80,52 @@ const GameSimulator = () =>
     const isShowdown =
         hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE";
 
+    // Help: convert players array -> { [seat]: player } map
+    function normalizePlayers(playersArray) {
+        if (!Array.isArray(playersArray)) return playersArray;
+        const map = {};
+        playersArray.forEach(p => { map[p.seat] = p; });
+        return map;
+    }
+
+    // Apply normalisation when hand state is set
+    const setHandNormalized = (rawHand) => {
+        if (!rawHand) { setHand(null); return; }
+        setHand({
+            ...rawHand,
+            players: normalizePlayers(rawHand.players),
+        });
+    };
+
     function applySelection(hand, selected) {
         if (!hand) return hand;
 
-        const players = { ...hand.players };
+        const cardStr = (c) => (c && typeof c === 'object' ? c.card : c);
 
-        Object.values(players).forEach(p => {
-            const sel = selected.playerCards[p.seat] || [];
-            p.hand = p.hand.map(c => ({
-                ...c,
-                selected: sel.includes(c.card)
-            }));
+        const players = {};
+        Object.entries(hand.players).forEach(([seat, p]) => {
+            const seatNum = Number(seat);
+            const sel = selected.playerCards[seatNum] || [];
+            players[seat] = {
+                ...p,
+                hand: (p.hand || []).map(c => {
+                    const str = cardStr(c);
+                    return str ?  { card: str, selected: sel.includes(str) } : null
+                }),
+            };
+        })
+
+        const board = (hand.board || []).map(c => {
+            const str = cardStr(c);
+            return str ? { card: str, selected: selected.boardCards.includes(str) } : null
         });
 
-        const board = hand.board.map(c => ({
-            ...c,
-            selected: selected.boardCards.includes(c.card)
-        }));
+        const nodes = (hand.nodes || []).map(c => {
+            const str = cardStr(c);
+            return str ? { card: str, selected: selected.boardCards.includes(str) } : null
+        });
 
-        return { ...hand, players, board };
+        return { ...hand, players, board, nodes };
     }
 
     const displayHand = applySelection(hand, selectedCards);
@@ -117,9 +133,6 @@ const GameSimulator = () =>
     return (
         <div style={{ padding: 16 }}>
             <h3> Game Simulator </h3>   
-
-            {/* <button onClick={async () => setHand(await handleRestart())}>Restart</button>
-            <button onClick={async () => setHand(await handleNewHand())}>Start New Hand</button> */}
 
             <button onClick={() => handleRestart()}>Restart</button>
             <button onClick={() => handleNewHand()}>Start New Hand</button>
@@ -148,9 +161,9 @@ const GameSimulator = () =>
                 <div className="game-layout__main">
 
                     <PokerTable
-                        players={hand ? hand.players : {}}
-                        boardCards={hand ? hand.board : []}
-                        nodes={hand ? hand.nodes : []}
+                        players={displayHand ? displayHand.players : {}}
+                        boardCards={displayHand ? displayHand.board : []}
+                        nodes={displayHand ? displayHand.nodes : []}
                         layoutName={hand?.layout_name}
                         points={hand?.points}
                         showdown={hand?.showdown}

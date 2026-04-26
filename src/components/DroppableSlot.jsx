@@ -14,6 +14,10 @@ const DroppableSlot = ({
   onCardClick,
   onSlotClick
 }) => {
+  const normCard = typeof cardObj === 'string'
+    ? { card: cardObj, selected: false, hidden: false }
+    : cardObj;
+
   const { setNodeRef, isOver } = useDroppable({
     id: `${variant}-${location}-slot-${index}`,
     data: { 
@@ -23,35 +27,28 @@ const DroppableSlot = ({
     }
   });
 
-  // React.useEffect(() => {
-  //   console.log(`DroppableSlot mounted: ${variant}-slot-${index}`);
-  // }, [index]);
-
-  // console.log("CardObj: ", cardObj);
-
   return (
     <div
       ref={setNodeRef}
       className={`${variant}-slot ${activeSlot === index ? 'active-slot' : ''} ${isOver ? 'hovered' : ''}`}
     >
-      {cardObj ? (
+      {normCard ? (
         <DraggableCard 
-          id={cardObj.card}
+          id={normCard.card}
           source={{ variant, location, index }}
           onClick={() => onCardClick(index)}
         >
           <Card
-            card={cardObj ? cardObj.card : null}
+            card={normCard ? normCard.card : null}
             scale={scale}
-            isHidden={cardObj?.hidden}
-            isSelected={cardObj?.selected}
+            isHidden={normCard?.hidden}
+            isSelected={normCard?.selected}
             isActiveTarget={activeSlot === index}
             showOutline={showSlots}
             isClickable={true}
-            // onClick={() => (cardObj ? onCardClick(index) : onSlotClick(index))}
             onClick={(e) => {
               e.stopPropagation(); // prevent BoardArea click
-              if (cardObj) onCardClick(index);
+              if (normCard) onCardClick(index);
               else onSlotClick(index);
             }}
           />

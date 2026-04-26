@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import "../css/PointDetailPanel.css";
 
-const PointDetailPanel = ({ point, boardIndex, players, onClose }) => {
-
+const PointDetailPanel = ({ point, boardIndex, players, onSelectHand, onClose }) => {
     const board = point?.board_results?.[boardIndex];
-
     const [selectedPlayer, setSelectedPlayer] = useState(null);
 
     if (!board || !Array.isArray(board)) {
@@ -17,6 +15,16 @@ const PointDetailPanel = ({ point, boardIndex, players, onClose }) => {
         if (!b.hand_value) return -1;
         return b.hand_value - a.hand_value;
     });
+
+    const handleRowClick = (p) => {
+        setSelectedPlayer(p);
+        if (onSelectHand) {
+            onSelectHand(p.player_index, {
+                hole_cards_used: p.hole_cards_used || [],
+                board_cards_used: p.board_cards_used || []
+            });
+        }
+    };
 
     return (
         <div className="point-detail-panel">
@@ -31,7 +39,7 @@ const PointDetailPanel = ({ point, boardIndex, players, onClose }) => {
                 <div
                     key={idx}
                     className={`player-row ${p.is_winner ? "winner" : ""}`}
-                    onClick={() => setSelectedPlayer(p)}
+                    onClick = {() => handleRowClick(p)}
                 >
                     <span className="player-name">
                         {players[p.player_index]?.name}

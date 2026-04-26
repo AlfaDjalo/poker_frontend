@@ -24,12 +24,11 @@ const PokerTable = ({
   onBoardAreaClick,
   loading
 }) => {
-  const boardNodes = nodes?.length ? nodes : (boardCards || []);
-  // const boardNodes = nodes?.length
-  //   ? nodes
-  //   : (boardCards || []).map(c => c?.card ?? null);
+  // const boardNodes = nodes?.length ? nodes : (boardCards || []);
+  const boardNodes = nodes?.length
+    ? nodes
+    : (boardCards || []).map(c => (typeof c === 'onject' && c != null ? c.card : c));
 
-  // console.log("BoardCards: ", boardCards)
   console.log("Nodes: ", nodes)
   console.log("BoardNodes: ", boardNodes)
   console.log("LayoutName: ", layoutName)
