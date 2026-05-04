@@ -1,62 +1,154 @@
-.point-detail {
+/* =====================================================
+   PointDetailPanel
+   ===================================================== */
+
+.point-detail-panel {
     background: #020617;
-    border-radius: 12px;
-    padding: 12px;
-    margin-top: 8px;
+    border-radius: 10px;
+    padding: 10px 12px;
     border: 1px solid #1e293b;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-/* Title */
-.point-detail__title {
-    font-weight: 600;
-    margin-bottom: 8px;
-}
+/* ---- Header ---- */
 
-/* Board section */
-.point-detail__board {
-    margin-bottom: 12px;
-}
-
-/* Player row */
-.point-detail__row {
+.point-detail-panel__header {
     display: flex;
     justify-content: space-between;
-    padding: 8px;
-    border-radius: 8px;
-    background: #1e293b;
-    margin-bottom: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
+    align-items: center;
 }
 
-.point-detail__row:hover {
-    background: #334155;
-}
-
-.point-detail__row.active {
-    outline: 2px solid #60a5fa;
-}
-
-/* Winner highlight */
-.point-detail__row.winner {
-    border-left: 4px solid #22c55e;
-}
-
-/* Hand category */
-.point-detail__category {
+.point-detail-panel__title {
     font-size: 12px;
-    opacity: 0.7;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #93c5fd;
 }
 
-/* Cards */
-.point-detail__cards {
+.point-detail-panel__close {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.point-detail-panel__close:hover {
+    color: #f87171;
+}
+
+/* ---- Player rows ---- */
+
+.point-detail-panel__rows {
     display: flex;
+    flex-direction: column;
     gap: 4px;
 }
 
-.point-detail__card {
-    font-size: 12px;
+.point-detail-panel__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 6px;
     background: #0f172a;
-    padding: 2px 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.point-detail-panel__row:hover {
+    background: #1e293b;
+}
+
+.point-detail-panel__row.winner {
+    border-left: 3px solid #22c55e;
+}
+
+.point-detail-panel__row.active {
+    border-color: #60a5fa;
+    background: #1e3a6e;
+}
+
+.point-detail-panel__player-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.point-detail-panel__category {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* ---- Best-hand view ---- */
+
+.point-detail-panel__hand-view {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.point-detail-panel__hand-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+}
+
+.point-detail-panel__cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Base card chip */
+.point-detail-panel__card {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 6px;
     border-radius: 4px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+/* Hole card — warm gold */
+.point-detail-panel__card--hole {
+    background: #78350f;
+    color: #fef3c7;
+    border-color: #d97706;
+}
+
+/* Board card — cool blue */
+.point-detail-panel__card--board {
+    background: #1e3a8a;
+    color: #bfdbfe;
+    border-color: #3b82f6;
+}
+
+/* ---- Legend ---- */
+
+.point-detail-panel__legend {
+    display: flex;
+    gap: 10px;
+    font-size: 10px;
+}
+
+.point-detail-panel__legend-hole {
+    color: #d97706;
+}
+
+.point-detail-panel__legend-board {
+    color: #3b82f6;
 }

@@ -1,29 +1,30 @@
 .hand {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   position: relative;
+  /* Let the hand shrink to its content — critical so it doesn't push the seat wide */
+  width: fit-content;
 }
 
-.hand-card {
-  display: inline-block;
-  transition: margin-left 0.2s ease, transform 0.2s ease;
+/* Each wrapper reserves exactly the scaled card footprint */
+.hand__slot-wrapper {
   position: relative;
+  flex-shrink: 0;
+  /* Establish stacking context so z-index on hover works */
+  isolation: isolate;
+  transition: transform 0.15s ease;
 }
 
-/* Hover effect to spread cards slightly */
-.hand:hover .hand-card {
-  transform: translateY(-2px);
+/* Lift any card on hover */
+.hand__slot-wrapper:hover {
+  /* counter the parent transform-origin so the lift looks natural */
+  z-index: 20 !important;
+  /* translateY in screen space — compensate for the scale */
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
 }
 
-.hand:hover .hand-card:hover {
-  transform: translateY(-5px) scale(1.05);
-  z-index: 10;
-}
-
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .hand-card {
-    /* Reduce overlap on mobile for better readability */
-  }
+/* In fan mode, add a slight upward nudge on hover */
+.hand--fan .hand__slot-wrapper:hover {
+  transform: translateY(-6px) !important;
 }

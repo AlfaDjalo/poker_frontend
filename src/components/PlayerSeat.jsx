@@ -1,6 +1,7 @@
 import React from "react";
 import "../css/PlayerSeat.css";
 import Hand from "./Hand";
+
 import { useDroppable } from "@dnd-kit/core";
 
 const PlayerSeat = ({ 
@@ -23,13 +24,12 @@ const PlayerSeat = ({
   return (
 
     <div
-      className={`player-seat 
-        ${isActive ? 'active-target' : ''}
-        ${player?.folded ? 'folded' : ''}
-      `}
-      // className={`player-seat ${isActive ? 'active-target' : ''} ${isOverHandArea ? "hovered" : ""}`}
+      className={[
+        "player-seat",
+        isActive ? "active-target" : "",
+        player?.folded ? "folded" : "",
+      ].filter(Boolean).join(" ")}
       onClick={handleSeatClick}
-      // ref={setHandAreaRef}
     >
       {player ? (
         <>
@@ -37,18 +37,16 @@ const PlayerSeat = ({
             <span className="player-name">{player.name}</span>
             <span className="player-stack">${player.stack}</span>
           </div>
-          {/* {console.log(player.hand)} */}
+
           <Hand 
             seatNumber={seatNumber}
             cards={player.hand}
-            scale={1}
             showSlots={true}
             activeSlot={activeSlot}
             onCardClick={onCardClick}
             onSlotClick={onSlotClick}
             maxCards={player.hand.length}
           />
-          {/* {console.log("Rendering PlayerSeat", seatNumber, player)} */}
 
           {!loading && player.equity !== undefined && (
             <div className="player-equity">
@@ -56,11 +54,6 @@ const PlayerSeat = ({
             </div>
           )}
 
-          {/* {player.equity !== undefined && (
-            <div className="player-equity">
-              Equity: {player.equity.toFixed(1)}%
-            </div>
-          )} */}
         </>
       ) : (
         <div className="player-info empty-seat">Empty Seat</div>

@@ -31,9 +31,27 @@ function formatHandData(rawHand) {
     };
 }
 
-export const startNewHand = async () => {
+export const getVariants = async () => {
+    const response = await fetch(`${API_BASE_URL}/game/variants`);
+    if (!response.ok) throw new Error('Failed to fetch variants');
+    return response.json();
+}
+
+export const selectGame = async (gameName) => {
+    const response = await fetch(`${API_BASE_URL}/game/select-game`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_name: gameName })
+    });
+    if (!response.ok) throw new Error('Failed to select game variant');
+    return response.json();
+};
+
+export const startNewHand = async (gameName = null) => {
     const response = await fetch(`${API_BASE_URL}/game/new-hand`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_name: gameName }),
     });
 
     if (!response.ok) throw new Error('Network response was not ok');
@@ -42,9 +60,11 @@ export const startNewHand = async () => {
     return formatHandData(rawHand);
 };
 
-export const restart = async () => {
+export const restart = async (gameName = null) => {
     const response = await fetch(`${API_BASE_URL}/game/restart`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_name: gameName })
     });
 
     if (!response.ok) throw new Error('Network response was not ok');
@@ -52,15 +72,6 @@ export const restart = async () => {
     const rawHand = await response.json();
     return formatHandData(rawHand);
 };
-
-// export const dealNextStreet = async () => {
-//     const response = await fetch(`${API_BASE_URL}/game/deal_next_street`, {
-//         method: 'POST'
-//     });
-//     if (!response.ok) throw new Error("Network response was not ok");
-//     const rawHand = await response.json();
-//     return formatHandData(rawHand);
-// };
 
 export const sendAction = async(type, amount = null) => {
     const response = await fetch(`${API_BASE_URL}/game/action`, {

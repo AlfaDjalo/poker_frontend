@@ -1,22 +1,191 @@
+/* =====================================================
+   GameSimulator — wrapper
+   ===================================================== */
+
+.game-simulator {
+    padding: 0;
+    font-family: inherit;
+}
+
+/* =====================================================
+   Header bar
+   Single row: title + buttons on the left,
+   game selector on the right.
+   ===================================================== */
+
+.game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+    background: #1a1a2e;
+    border-bottom: 1px solid #2d2d4a;
+    flex-wrap: wrap;
+}
+
+.game-header__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.game-header__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e2e8f0;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+/* Header action buttons */
+.game-btn {
+    padding: 5px 14px;
+    border-radius: 5px;
+    border: 1px solid #4a5568;
+    background: #2d3748;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.game-btn:hover:not(:disabled) {
+    background: #3d4f6a;
+    border-color: #7c9fff;
+}
+
+.game-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Right side of header */
+.game-header__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+/* ---- Variant selector ---- */
+
+.game-variant-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+    white-space: nowrap;
+}
+
+.game-variant-dropdown {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #94a3b8;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 190px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: auto; /* use native OS arrow */
+}
+
+.game-variant-dropdown:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.game-variant-dropdown:hover:not(:disabled) {
+    border-color: #60a5fa;
+}
+
+.game-variant-dropdown:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Amber border when a game change is queued */
+.game-variant-dropdown--pending {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+
+.game-variant-pending {
+    font-size: 11px;
+    color: #f59e0b;
+    white-space: nowrap;
+}
+
+/* =====================================================
+   Info bar (status message + pot + street)
+   ===================================================== */
+
+.game-info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 14px;
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    font-size: 13px;
+    color: #e2e8f0;
+    min-height: 28px;
+}
+
+/* GameStatusBar renders its own text — override its centering */
+.game-info-bar .game-status-bar {
+    text-align: left;
+    margin: 0;
+    color: #93c5fd;
+    font-size: 13px;
+}
+
+.game-info-bar__right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.game-info-bar__street {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+}
+
+/* =====================================================
+   Pot animation
+   ===================================================== */
+
+.pot {
+    display: inline-block;
+    font-weight: 600;
+}
+
 .pot.push {
     animation: potPush 0.8s ease-out;
 }
 
 @keyframes potPush {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.4); }
     100% { transform: scale(1); }
 }
 
-.hand-strength {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #ffd700;
-}
+/* =====================================================
+   Game layout (table + sidebar side by side)
+   ===================================================== */
 
 .game-layout {
     display: flex;
-    gap: 16px;
+    gap: 0;
     align-items: flex-start;
 }
 
@@ -26,16 +195,30 @@
 }
 
 .game-layout__sidebar {
-    width: 320px;
+    width: 300px;
     flex-shrink: 0;
+    padding: 10px 8px;
+    box-sizing: border-box;
+    /* Align sidebar top with the table top */
+    align-self: flex-start;
 }
 
 @media (max-width: 900px) {
     .game-layout {
         flex-direction: column;
     }
-
     .game-layout__sidebar {
         width: 100%;
+        padding: 8px 4px;
     }
+}
+
+/* =====================================================
+   Misc
+   ===================================================== */
+
+.hand-strength {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ffd700;
 }

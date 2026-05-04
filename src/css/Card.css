@@ -16,7 +16,7 @@
 }
 
 .card.selected {
-  translate: 0 -20%;
+  translate: 0 -10%;
   border-color: #fbbf24;
   box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
 }

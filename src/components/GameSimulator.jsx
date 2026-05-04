@@ -6,10 +6,9 @@ import PlayerActionPanel from "./PlayerActionPanel";
 import GameStatusBar from "./GameStatusBar";
 import WinnerBanner from "./WinnerBanner";
 
-import { restart, startNewHand, sendAction } from '../api/pokerApi';
+import { restart, startNewHand, sendAction, getVariants } from '../api/pokerApi';
+// import { restart, startNewHand, sendAction, getVariants, selectGame } from '../api/pokerApi';
 import "../css/GameSimulator.css";
-
-// import { Play } from 'lucide-react';
 
 const STREET_NAMES = {
     0: "Preflop",
@@ -19,20 +18,42 @@ const STREET_NAMES = {
     4: "Showdown"
 };
 
+// A hand is "in progress" in any phase except HAND_COMPLETE (and null = no hand yet)
+const isHandInProgress = (hand) =>
+    hand !== null && hand?.phase !== "HAND_COMPLETE";
+
+// Format a yaml stem into a human-readable label
+const formatVariantLabel = (name) =>
+    name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const EMPTY_SELECTION = { playerCards: {}, boardCards: []};
+
 const GameSimulator = () =>
 {
     const [hand, setHand] = useState(null);
     const isHandOver = hand?.phase === "HAND_COMPLETE";
     const availableActions = hand?.available_actions || [];
 
+    // ---- Variant state ----    
+    const [variants, setVariants] = useState([]);
+    const [selectedGame, setSelectedGame] = useState(null);
+    const [pendingGame, setPendingGame] = useState(null);
+
     const [prevPot, setPrevPot] = useState(0);
     const [animatePot, setAnimatePot] = useState(false);
     const [showWinner, setShowWinner] = useState(false);
-    const [selectedCards, setSelectedCards] = useState({
-        playerCards: {},
-        boardCards: []
-    });
+    const [selectedCards, setSelectedCards] = useState(EMPTY_SELECTION);
 
+    // Load available variants once on mount
+    useEffect(() => {
+        getVariants()
+            .then(({ variants: v, current }) => {
+                setVariants(v);
+                setSelectedGame(current);
+                setPendingGame(current);
+            })
+            .catch(err => console.error("Failed to load variants:", err))
+    }, []);
 
     useEffect(() => {
         if (!hand) return;
@@ -55,10 +76,31 @@ const GameSimulator = () =>
         }
     }, [isHandOver, hand])
 
-    const handleRestart = async () => setHandNormalized(await restart());
+    const handleVariantChange = (e) => {
+        // Only update local UI state; the change is forwarded to the backend
+        // when the user clicks Restart or Start New Hand.
+        setPendingGame(e.target.value);
+    }
+
+    // ---- Actions ----
+
+    const handleRestart = async () => {
+        // Ensure backend knows about the game change
+        // if (pendingGame !== selectedGame) {
+        //     await selectGame(pendingGame);
+        // }
+        const newHand = await restart(pendingGame);
+        setSelectedGame(pendingGame);
+        setHandNormalized(newHand);
+    };
     
     const handleNewHand = async () => {
-        const newHand = await startNewHand();
+        // Ensure backend knows about the game change
+        // if (pendingGame !== selectedGame) {
+        //     await selectGame(pendingGame);
+        // }
+        const newHand = await startNewHand(pendingGame);
+        setSelectedGame(pendingGame);
         setHandNormalized(newHand);
     };
     
@@ -80,7 +122,7 @@ const GameSimulator = () =>
     const isShowdown =
         hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE";
 
-    // Help: convert players array -> { [seat]: player } map
+    // ---- Normalisation helpers ----
     function normalizePlayers(playersArray) {
         if (!Array.isArray(playersArray)) return playersArray;
         const map = {};
@@ -88,7 +130,6 @@ const GameSimulator = () =>
         return map;
     }
 
-    // Apply normalisation when hand state is set
     const setHandNormalized = (rawHand) => {
         if (!rawHand) { setHand(null); return; }
         setHand({
@@ -130,36 +171,70 @@ const GameSimulator = () =>
 
     const displayHand = applySelection(hand, selectedCards);
 
+    const handInProgress = isHandInProgress(hand);
+    const gameWillChange = pendingGame && pendingGame !== selectedGame;
+
     return (
-        <div style={{ padding: 16 }}>
-            <h3> Game Simulator </h3>   
-
-            <button onClick={() => handleRestart()}>Restart</button>
-            <button onClick={() => handleNewHand()}>Start New Hand</button>
-
-            <GameStatusBar hand={hand} />
-            <div className={`pot ${animatePot ? "push" : ""}`}>
-                {/* ${hand.pot} */}
-                Pot: {hand ? hand.pot : 0}
-            </div> 
-            <div>Street</div>
-            <div>{hand ? STREET_NAMES[hand?.street] : 0}</div>
-            
-            { showWinner && (
-                <WinnerBanner
-                    hand={hand}
-                    onClose={() => setShowWinner(false)}
-                />
+        <div className="game-simulator">
+ 
+            {/* ===== Single header bar ===== */}
+            <div className="game-header">
+ 
+                {/* Left: title + action buttons */}
+                <div className="game-header__left">
+                    <span className="game-header__title">Crazy Asian Poker</span>
+                    <button className="game-btn" onClick={handleRestart}>Restart</button>
+                    <button className="game-btn" onClick={handleNewHand} disabled={handInProgress}>
+                        New Hand
+                    </button>
+                </div>
+ 
+                {/* Right: game selector */}
+                <div className="game-header__right">
+                    {gameWillChange && (
+                        <span className="game-variant-pending">⚠ next hand</span>
+                    )}
+                    <label htmlFor="game-variant-select" className="game-variant-label">
+                        Game:
+                    </label>
+                    <select
+                        id="game-variant-select"
+                        className={`game-variant-dropdown ${gameWillChange ? "game-variant-dropdown--pending" : ""}`}
+                        value={pendingGame || ""}
+                        onChange={handleVariantChange}
+                        disabled={variants.length === 0}
+                        title={handInProgress ? "Takes effect on next hand" : "Select a game variant"}
+                    >
+                        {variants.length === 0 && <option value="">Loading…</option>}
+                        {variants.map((v) => (
+                            <option key={v} value={v}>{formatVariantLabel(v)}</option>
+                        ))}
+                    </select>
+                </div>
+ 
+            </div>
+ 
+            {/* ===== Status / info bar ===== */}
+            <div className="game-info-bar">
+                <GameStatusBar hand={hand} />
+                <div className="game-info-bar__right">
+                    <span className={`pot ${animatePot ? "push" : ""}`}>
+                        Pot: {hand ? hand.pot : 0}
+                    </span>
+                    <span className="game-info-bar__street">
+                        {hand ? STREET_NAMES[hand.street] ?? "" : ""}
+                    </span>
+                </div>
+            </div>
+ 
+            {showWinner && (
+                <WinnerBanner hand={hand} onClose={() => setShowWinner(false)} />
             )}
-            {/* {hand.phase === "SHOWDOWN" && ( */}
-            {/* {(hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE") && (
-                <WinnerBanner hand={hand}/>
-            )} */}
-
+ 
+            {/* ===== Table + sidebar ===== */}
             <div className="game-layout">
-
+ 
                 <div className="game-layout__main">
-
                     <PokerTable
                         players={displayHand ? displayHand.players : {}}
                         boardCards={displayHand ? displayHand.board : []}
@@ -167,8 +242,7 @@ const GameSimulator = () =>
                         layoutName={hand?.layout_name}
                         points={hand?.points}
                         showdown={hand?.showdown}
-                        dealerSeat={1}              // or hand?.dealerButton if you add it later
-                        // activeTarget={ actionPlayer ? { type: "player", seat: actionPlayer } : null }         // placeholder until you wire DnD targeting
+                        dealerSeat={1}
                         actionSeat={actionPlayer}
                         onSeatClick={(seatNum) => console.log("Seat clicked:", seatNum)}
                         onPlayerCardClick={(seatNum, cardIndex) =>
@@ -177,35 +251,28 @@ const GameSimulator = () =>
                         onPlayerSlotClick={(seatNum, slotIndex) =>
                             console.log(`Clicked slot ${slotIndex} for player ${seatNum}`)
                         }
-                        onBoardCardClick={(index) =>
-                            console.log(`Clicked board card ${index}`)
-                        }
-                        onBoardSlotClick={(index) =>
-                            console.log(`Clicked board slot ${index}`)
-                        }
+                        onBoardCardClick={(index) => console.log(`Clicked board card ${index}`)}
+                        onBoardSlotClick={(index) => console.log(`Clicked board slot ${index}`)}
                         onBoardAreaClick={() => console.log("Board area clicked")}
                         loading={false}
                     />
-
-                    <div className="game-layout__sidebar">
-
-                        {/* Showdown summary panel */}
-                        {isShowdown && hand?.showdown && (
-                            <ShowdownSummary
-                                showdown={hand.showdown}
-                                points={hand.points}
-                                players={hand.players}
-                                onSelectHand={setSelectedCards}
-                                // onSelectHand={(selection) => setSelectedCards(selection)}
-                            />
-                        )}
-                    </div>
                 </div>
-
+ 
+                {isShowdown && hand?.showdown && (
+                    <div className="game-layout__sidebar">
+                        <ShowdownSummary
+                            showdown={hand.showdown}
+                            points={hand.points}
+                            players={hand.players}
+                            onSelectHand={setSelectedCards}
+                            onClose={() => setSelectedCards(EMPTY_SELECTION)}
+                        />
+                    </div>
+                )}
+ 
             </div>
-
-
-            { player && (
+ 
+            {player && (
                 <PlayerActionPanel
                     player={player}
                     availableActions={availableActions}
@@ -215,7 +282,7 @@ const GameSimulator = () =>
                     onAction={handlePlayerAction}
                 />
             )}
-
+ 
         </div>
     );
 };
