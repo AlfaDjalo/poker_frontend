@@ -3,14 +3,21 @@
    ===================================================== */
 
 .game-simulator {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* Use full viewport width, counteracting any parent padding */
+    max-width: 100%;
+    height: calc(100vh - 56px);
     padding: 0;
+    margin: 0;
+    box-sizing: border-box;
     font-family: inherit;
+    overflow: hidden;
 }
 
 /* =====================================================
    Header bar
-   Single row: title + buttons on the left,
-   game selector on the right.
    ===================================================== */
 
 .game-header {
@@ -22,6 +29,7 @@
     background: #1a1a2e;
     border-bottom: 1px solid #2d2d4a;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .game-header__left {
@@ -39,7 +47,6 @@
     letter-spacing: 0.02em;
 }
 
-/* Header action buttons */
 .game-btn {
     padding: 5px 14px;
     border-radius: 5px;
@@ -63,7 +70,6 @@
     cursor: not-allowed;
 }
 
-/* Right side of header */
 .game-header__right {
     display: flex;
     align-items: center;
@@ -91,7 +97,7 @@
     cursor: pointer;
     min-width: 190px;
     transition: border-color 0.15s, box-shadow 0.15s;
-    appearance: auto; /* use native OS arrow */
+    appearance: auto;
 }
 
 .game-variant-dropdown:focus {
@@ -109,7 +115,6 @@
     cursor: not-allowed;
 }
 
-/* Amber border when a game change is queued */
 .game-variant-dropdown--pending {
     border-color: #f59e0b;
     box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
@@ -122,7 +127,7 @@
 }
 
 /* =====================================================
-   Info bar (status message + pot + street)
+   Info bar
    ===================================================== */
 
 .game-info-bar {
@@ -135,9 +140,9 @@
     font-size: 13px;
     color: #e2e8f0;
     min-height: 28px;
+    flex-shrink: 0;
 }
 
-/* GameStatusBar renders its own text — override its centering */
 .game-info-bar .game-status-bar {
     text-align: left;
     margin: 0;
@@ -180,27 +185,43 @@
 }
 
 /* =====================================================
-   Game layout (table + sidebar side by side)
+   Game layout — fills remaining height
+   Table on left, showdown sidebar pinned to the right
    ===================================================== */
 
 .game-layout {
     display: flex;
+    flex: 1 1 0;
+    min-height: 0;
     gap: 0;
-    align-items: flex-start;
+    align-items: stretch;
+    /* overflow: visible so that player seats protruding outside the table
+       felt are never clipped by the layout container */
+    overflow: visible;
 }
 
 .game-layout__main {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
 }
 
+/* Showdown sidebar — right-justified, fixed width */
 .game-layout__sidebar {
-    width: 300px;
+    width: 280px;
     flex-shrink: 0;
     padding: 10px 8px;
     box-sizing: border-box;
-    /* Align sidebar top with the table top */
-    align-self: flex-start;
+    background: #0a0c0f;
+    border-left: 1px solid #1a1f2e;
+    overflow-y: auto;
+    align-self: stretch;
+    /* Pushes to far right naturally via flex order */
+    order: 2;
+    z-index: 5;
+    position: relative;
 }
 
 @media (max-width: 900px) {
@@ -210,6 +231,9 @@
     .game-layout__sidebar {
         width: 100%;
         padding: 8px 4px;
+        border-left: none;
+        border-top: 1px solid #1a1f2e;
+        order: 2;
     }
 }
 

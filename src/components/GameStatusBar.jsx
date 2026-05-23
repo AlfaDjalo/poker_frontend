@@ -2,14 +2,21 @@ import React from "react";
 
 import "../css/GameStatusBar.css";
 
-const STREET_NAMES = ["Preflop", "Flop", "Turn", "River", "Showdown"]
+const FALLBACK_STREET_NAMES = ["Preflop", "Flop", "Turn", "River", "Showdown"]
 
+function getStreetName(hand, streetIndex) {
+    if (hand?.street_names) {
+        const name = hand.street_names[streetIndex];
+        if (name != null) return name;
+    }
+    return FALLBACK_STREET_NAMES[streetIndex] ?? `Street ${streetIndex}`;
+}
 const GameStatusBar = ({ hand }) => {
     if (!hand) return null;
 
     console.log("Hand: ", hand)
 
-    const streetName = STREET_NAMES[hand.street] || "Unknown";
+    const streetName = getStreetName(hand, hand.street);
 
     const actingSeat = 
         hand.current_player;

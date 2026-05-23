@@ -1,63 +1,63 @@
 .player-seat {
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid #aaa;
-  border-radius: 8px;
-  padding: 0.35rem 0.6rem;
-  text-align: center;
-  color: white;
-  font-size: 0.8rem;
-  /* Never grow wider than the space the seat css allows */
-  max-width: 100%;
-  box-sizing: border-box;
-  /* Prevent the hand from blowing out the seat box */
-  overflow: hidden;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    padding: 0.35rem 0.6rem;
+    text-align: center;
+    color: white;
+    font-size: 0.8rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* IMPORTANT: allow cards/hands to render outside the seat box.
+       overflow: hidden was clipping large hands on the game simulator. */
+    overflow: visible;
 }
 
 /* ---- Player info row ---- */
 
 .player-info {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  gap: 4px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 4px;
 }
 
 .player-name {
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .player-stack {
-  font-size: 0.7rem;
-  color: #ffd700;
-  white-space: nowrap;
-  flex-shrink: 0;
+    font-size: 0.7rem;
+    color: #ffd700;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* ---- States ---- */
 
 .empty-seat {
-  opacity: 0.7;
-  font-style: italic;
+    opacity: 0.7;
+    font-style: italic;
 }
 
 .player-seat.active-target {
-  border: 2px solid gold;
-  box-shadow: 0 0 10px gold;
+    border: 2px solid gold;
+    box-shadow: 0 0 10px gold;
 }
 
 .player-seat.folded {
-  opacity: 0.4;
-  filter: grayscale(100%);
+    opacity: 0.4;
+    filter: grayscale(100%);
 }
 
 /* ---- Equity display ---- */
 
 .player-equity {
-  margin-top: 0.3rem;
-  font-size: 0.75rem;
-  color: #e0e0e0;
-  text-align: center;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: #e0e0e0;
+    text-align: center;
 }

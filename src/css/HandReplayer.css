@@ -1,0 +1,263 @@
+/* ═══════════════════════════════════════════
+   HandReplayer — full-screen layout
+   ═══════════════════════════════════════════ */
+
+.hand-replayer {
+    display: flex;
+    height: calc(100vh - 56px);
+    width: 100%;
+    max-width: 100%;
+    background: #592703;
+    /* overflow hidden would clip the browser/sidebar scrollbars and seats.
+       Use clip on just the axes that matter via individual pane overflow settings. */
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0e0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ── Left: browser pane ── */
+.hand-replayer__browser {
+    flex-shrink: 0;
+    width: 220px;
+    overflow: hidden;
+    border-right: 1px solid #1a1f2e;
+    display: flex;
+    flex-direction: column;
+    background: #0a0c0f;
+    z-index: 1;
+    align-self: stretch;
+}
+
+/* ── Centre pane ── */
+.hand-replayer__centre {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    /* overflow: hidden would clip seats that protrude outside the felt;
+       use visible so seats are never cut off. The flex layout still
+       constrains dimensions correctly. */
+    overflow: visible;
+}
+
+/* ── Status bar ── */
+.hand-replayer__status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-bottom: 1px solid #2d2d4a;
+    background: #1a1a2e;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    min-height: 32px;
+    z-index: 1;
+}
+
+.hr-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+.hr-badge--variant {
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #f59e0b;
+}
+
+.hr-badge--layout {
+    background: rgba(96,165,250,0.08);
+    border: 1px solid rgba(96,165,250,0.2);
+    color: #60a5fa;
+}
+
+.hr-pot {
+    font-size: 13px;
+    color: #4ade80;
+    font-weight: 700;
+}
+
+.hr-label {
+    font-size: 12px;
+    color: #6b7a94;
+    margin-left: auto;
+}
+
+.hr-hint {
+    font-size: 12px;
+    color: #3d4a60;
+    font-style: italic;
+}
+
+.hr-loading {
+    font-size: 11px;
+    color: #6b7a94;
+    animation: pulse 1s infinite;
+}
+
+.hr-error {
+    font-size: 11px;
+    color: #f87171;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ── Table area — fills remaining vertical space ── */
+.hand-replayer__table-wrap {
+    flex: 1 1 0;
+    overflow: visible;
+    position: relative;
+    min-height: 0;
+    z-index: 10;
+}
+
+/*
+ * Force PokerTable to fill the pane completely.
+ * Seats protrude outside the felt so we need overflow: visible all the way down.
+ */
+.hand-replayer__table-wrap .poker-table-container {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 52px 14px 14px !important;
+    background-color: transparent !important;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: visible !important;
+}
+
+.hand-replayer__table-wrap .poker-table {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    max-width: none !important;
+}
+
+/* ── Empty state ── */
+.hand-replayer__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: #3d4a60;
+}
+
+.hand-replayer__empty-icon {
+    font-size: 64px;
+    opacity: 0.3;
+}
+
+.hand-replayer__empty-text {
+    font-size: 13px;
+    text-align: center;
+    max-width: 260px;
+    line-height: 1.6;
+}
+
+/* ── Controls ── */
+.hand-replayer__controls {
+    flex-shrink: 0;
+    padding: 6px 12px 8px;
+    background: #111827;
+    border-top: 1px solid #1f2937;
+    z-index: 5;
+    position: relative;
+}
+
+/* ── Right: sidebar ── */
+.hand-replayer__sidebar {
+    flex-shrink: 0;
+    width: 255px;
+    border-left: 1px solid #1a1f2e;
+    background: #0a0c0f;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
+    padding: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3448 transparent;
+    z-index: 15;
+    align-self: stretch;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.hand-replayer__sidebar > * + * {
+    margin-top: 8px;
+}
+
+/* ── Payouts block ── */
+.hand-replayer__payouts {
+    background: #0d0f14;
+    border: 1px solid #1e2535;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hand-replayer__payouts-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4ade80;
+    margin-bottom: 2px;
+}
+
+.hand-replayer__payout-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #c8d0e0;
+}
+
+.hand-replayer__payout-amount {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1000px) {
+    .hand-replayer__browser {
+        width: 180px;
+    }
+    .hand-replayer__sidebar {
+        width: 210px;
+    }
+}
+
+@media (max-width: 800px) {
+    .hand-replayer__browser {
+        display: none;
+    }
+    .hand-replayer__sidebar {
+        width: 190px;
+    }
+}
+
+@media (max-width: 640px) {
+    .hand-replayer {
+        flex-direction: column;
+    }
+    .hand-replayer__sidebar {
+        width: 100%;
+        max-height: 200px;
+        border-left: none;
+        border-top: 1px solid #1a1f2e;
+    }
+}

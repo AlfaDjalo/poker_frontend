@@ -27,6 +27,7 @@ function formatHandData(rawHand) {
         points: rawHand.point || [],
         layout_name: rawHand.layout_name || null,
         game_name: rawHand.game_name || null,
+        street_names: rawHand.street_names || null,
         players: normalizePlayers(rawHand.players || []),
     };
 }

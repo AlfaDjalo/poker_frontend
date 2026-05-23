@@ -26,7 +26,7 @@ import DroppableSlot from "./DroppableSlot";
 function handLayout(count) {
   if (count <= 4) return { scale: 1.00, overlap: 0 };
   if (count === 5) return { scale: 0.90, overlap: -14 };
-  if (count === 6) return { scale: 0.85, overlap: -30 };
+  if (count === 6) return { scale: 0.85, overlap: -16 };
   if (count === 7) return { scale: 0.80, overlap: -18 };
   if (count === 8) return { scale: 0.75, overlap: -20 };
   if (count === 9) return { scale: 0.70, overlap: -22 };
@@ -58,7 +58,7 @@ const Hand = ({
       {slots.map((cardObj, index) => (
         <div
           key={cardObj?.card || `slot-${seatNumber}-${index}`}
-          className="hand__slot_wrapper"
+          className="hand__slot-wrapper"
           style={
             shouldOverlap && index > 0
             ? { marginLeft: overlap }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import PokerTable from "./PokerTable";
 import ShowdownSummary from './ShowdownSummary';
@@ -7,20 +7,20 @@ import GameStatusBar from "./GameStatusBar";
 import WinnerBanner from "./WinnerBanner";
 
 import { restart, startNewHand, sendAction, getVariants } from '../api/pokerApi';
-// import { restart, startNewHand, sendAction, getVariants, selectGame } from '../api/pokerApi';
 import "../css/GameSimulator.css";
 
-const STREET_NAMES = {
-    0: "Preflop",
-    1: "Flop",
-    2: "Turn",
-    3: "River",
-    4: "Showdown"
-};
+const FALLBACK_STREET_NAMES = ["Preflop", "Flop", "Turn", "River", "Showdown"];
 
+function getStreetName(hand, streetIndex) {
+    if (hand?.street_names) {
+        const name = hand.street_names[streetIndex];
+        if (name != null) return name;
+    }
+    return FALLBACK_STREET_NAMES[streetIndex] ?? `Street ${streetIndex}`;
+}
 // A hand is "in progress" in any phase except HAND_COMPLETE (and null = no hand yet)
 const isHandInProgress = (hand) =>
-    hand !== null && hand?.phase !== "HAND_COMPLETE";
+    hand !== null && hand?.phase !== "HAND_COMPLETE" && hand?.phase !== "SHOWDOWN";
 
 // Format a yaml stem into a human-readable label
 const formatVariantLabel = (name) =>
@@ -42,6 +42,9 @@ const GameSimulator = () =>
     const [prevPot, setPrevPot] = useState(0);
     const [animatePot, setAnimatePot] = useState(false);
     const [showWinner, setShowWinner] = useState(false);
+
+    // selectedCards holds the user's card toggle state.
+    // Shape: { playerCards: { [seatNum]: string[] }, boardCards: string[] }
     const [selectedCards, setSelectedCards] = useState(EMPTY_SELECTION);
 
     // Load available variants once on mount
@@ -63,73 +66,87 @@ const GameSimulator = () =>
         }
 
         if (prevPot > 0 && hand.pot === 0) {
-        setAnimatePot(true);
-        setTimeout(() => setAnimatePot(false), 800);
+            setAnimatePot(true);
+            setTimeout(() => setAnimatePot(false), 800);
         }
 
         setPrevPot(hand.pot);
-    }, [hand])
+    }, [hand]);
 
-    useEffect(() => {
-        if (isHandOver) {
-            console.log("Hand over: ", hand);
-        }
-    }, [isHandOver, hand])
+    // ---- Card toggle helpers ----
+ 
+    // Toggle a single player card in/out of selectedCards.
+    const togglePlayerCard = useCallback((seatNum, card) => {
+        setSeleddtedCards(prev => {
+            const seatCards = prev.playerCards[seatNum] || [];
+            const next = seatCards.includes(card)
+                ? seatCards.filter(c => c !== card)
+                : [...seatCards, card];
+            return {
+                ...prev,
+                playerCards: { ...prev.playerCards, [seatNum]: next},
+            };
+        });
+    }, []);
 
-    const handleVariantChange = (e) => {
-        // Only update local UI state; the change is forwarded to the backend
-        // when the user clicks Restart or Start New Hand.
-        setPendingGame(e.target.value);
-    }
+    // Toggle a single board card in/out of selectedCards.
+    const toggleBoardCard = useCallback((card) => {
+        setSelectedCards(prev => {
+            const next = prev.boardCards.includes(card)
+                ? prev.boardCards.filter(c => c !== card)
+                : [...prev.boardCards, card];
+            return { ...prev, boardCards: next };
+        });
+    }, []);
 
     // ---- Actions ----
-
+    
     const handleRestart = async () => {
-        // Ensure backend knows about the game change
-        // if (pendingGame !== selectedGame) {
-        //     await selectGame(pendingGame);
-        // }
         const newHand = await restart(pendingGame);
         setSelectedGame(pendingGame);
+        setSelectedCards(EMPTY_SELECTION);      // clear selection on restart
         setHandNormalized(newHand);
     };
     
     const handleNewHand = async () => {
-        // Ensure backend knows about the game change
-        // if (pendingGame !== selectedGame) {
-        //     await selectGame(pendingGame);
-        // }
         const newHand = await startNewHand(pendingGame);
         setSelectedGame(pendingGame);
+        setSelectedCards(EMPTY_SELECTION);      // clear selection on new hand
         setHandNormalized(newHand);
     };
-    
+
     const handlePlayerAction = async (type, amount) => {
         const updated = await sendAction(type, amount);
+        setSelectedCards(EMPTY_SELECTION);      // clear selection on every action
         setHandNormalized(updated);
     }
 
+    const handleVariantChange = (e) => {
+        setPendingGame(e.target.value);
+    }
+            
     const actionPlayer = 
         hand?.phase === "BETTING"
         ? hand.current_player
         : null;
-
+    
     const player = 
         actionPlayer != null && hand?.players?.[actionPlayer]
-            ? hand.players[actionPlayer] 
-            : null;
-
+        ? hand.players[actionPlayer] 
+        : null;
+    
     const isShowdown =
         hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE";
 
     // ---- Normalisation helpers ----
+    
     function normalizePlayers(playersArray) {
         if (!Array.isArray(playersArray)) return playersArray;
         const map = {};
         playersArray.forEach(p => { map[p.seat] = p; });
         return map;
     }
-
+        
     const setHandNormalized = (rawHand) => {
         if (!rawHand) { setHand(null); return; }
         setHand({
@@ -137,12 +154,15 @@ const GameSimulator = () =>
             players: normalizePlayers(rawHand.players),
         });
     };
-
+        
+    // Merge the toggle selection state into the hand object for rendering.
+    // Each card object gets a `selected` boolean that Card.jsx uses to apply
+    // the selected CSS class.
     function applySelection(hand, selected) {
         if (!hand) return hand;
-
+        
         const cardStr = (c) => (c && typeof c === 'object' ? c.card : c);
-
+        
         const players = {};
         Object.entries(hand.players).forEach(([seat, p]) => {
             const seatNum = Number(seat);
@@ -151,26 +171,26 @@ const GameSimulator = () =>
                 ...p,
                 hand: (p.hand || []).map(c => {
                     const str = cardStr(c);
-                    return str ?  { card: str, selected: sel.includes(str) } : null
+                    return str ?  { card: str, selected: sel.includes(str), hidden: c?.hidden ?? false } : null;
                 }),
             };
-        })
-
+        });
+        
         const board = (hand.board || []).map(c => {
             const str = cardStr(c);
-            return str ? { card: str, selected: selected.boardCards.includes(str) } : null
+            return str ? { card: str, selected: selected.boardCards.includes(str), hidden: c?.hidden ?? false } : null
         });
-
+        
         const nodes = (hand.nodes || []).map(c => {
             const str = cardStr(c);
-            return str ? { card: str, selected: selected.boardCards.includes(str) } : null
+            return str ? { card: str, selected: selected.boardCards.includes(str), hidden: c?.hidden ?? false } : null
         });
-
+        
         return { ...hand, players, board, nodes };
     }
-
+            
     const displayHand = applySelection(hand, selectedCards);
-
+    
     const handInProgress = isHandInProgress(hand);
     const gameWillChange = pendingGame && pendingGame !== selectedGame;
 
@@ -222,7 +242,7 @@ const GameSimulator = () =>
                         Pot: {hand ? hand.pot : 0}
                     </span>
                     <span className="game-info-bar__street">
-                        {hand ? STREET_NAMES[hand.street] ?? "" : ""}
+                        {hand ? getStreetName(hand, hand.street) : ""}
                     </span>
                 </div>
             </div>
@@ -245,13 +265,19 @@ const GameSimulator = () =>
                         dealerSeat={1}
                         actionSeat={actionPlayer}
                         onSeatClick={(seatNum) => console.log("Seat clicked:", seatNum)}
-                        onPlayerCardClick={(seatNum, cardIndex) =>
+                        onPlayerCardClick={(seatNum, cardIndex) => {
                             console.log(`Clicked player ${seatNum} card ${cardIndex}`)
-                        }
+                            const card = displayHand?.players?.[seatNum]?.hand?.[cardIndex]?.card;
+                            if (card) togglePlayerCard(seatNum, card);
+                        }}
                         onPlayerSlotClick={(seatNum, slotIndex) =>
                             console.log(`Clicked slot ${slotIndex} for player ${seatNum}`)
                         }
-                        onBoardCardClick={(index) => console.log(`Clicked board card ${index}`)}
+                        onBoardCardClick={(index) => {
+                            console.log(`Clicked board card ${index}`)
+                            const card = displayHand?.nodes?.[nodeIndex]?.card;
+                            if (card) toggleBoardCard(card);
+                        }}
                         onBoardSlotClick={(index) => console.log(`Clicked board slot ${index}`)}
                         onBoardAreaClick={() => console.log("Board area clicked")}
                         loading={false}

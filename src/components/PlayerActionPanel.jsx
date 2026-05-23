@@ -21,11 +21,11 @@ const PlayerActionPanel = ({
     const callDisabled = !(canCall || canCheck)
 
     const handleBet = () => {
-        const amount = parseFloat(betAmount);
-        if (!isNaN(amount)) {
-            onAction(player?.bet > 0 ? "raise" : "bet", amount);
-            // onAction(player?.contributionCurrentStreet > 0 ? "raise" : "bet", amount);
-        }
+        let amount = parseFloat(betAmount);
+        if (isNaN(amount)) return;
+        if (minRaise != null) amount = Math.max(amount, minRaise);
+        if (maxRaise != null) amount = Math.min(amount, maxRaise); 
+        onAction(player?.bet > 0 ? "raise" : "bet", amount);
     };
     // const isAvailable = (action) => availableActions.includes(action);
 
@@ -40,40 +40,44 @@ const PlayerActionPanel = ({
 
     return (
         <div className="player-action-panel">
-        <button
-            className={`fold ${!can("fold") ? "disabled" : ""}`}
-            disabled={disabled || !can("fold")}
-            onClick={() => onAction("fold")}
-        >
-            Fold
-        </button>
-
-        <button
-            className={`call ${callDisabled ? "disabled" : ""}`}
-            disabled={disabled || callDisabled}
-            onClick={() => onAction(canCall ? "call" : "check")}
-        >
-            { canCall ? "Call" : canCheck ? "Check" : "-" } 
-        </button>
-
-        <div className="bet-section">
-            <input
-            type="number"
-            min={minRaise}
-            max={maxRaise}
-            value={betAmount}
-            onChange={(e) => setBetAmount(e.target.value)}
-            placeholder="Amount"
-            />
             <button
-            className={`bet ${ !canBet ? "disabled" : ""}`}
-            disabled={disabled || !canBet}
-            onClick={handleBet}
+                className={`fold ${!can("fold") ? "disabled" : ""}`}
+                disabled={disabled || !can("fold")}
+                onClick={() => onAction("fold")}
             >
-            {player?.bet > 0 ? "Raise" : "Bet"}
-            {/* {player?.contributionCurrentStreet > 0 ? "Raise" : "Bet"} */}
+                Fold
             </button>
-        </div>
+
+            <button
+                className={`call ${callDisabled ? "disabled" : ""}`}
+                disabled={disabled || callDisabled}
+                onClick={() => onAction(canCall ? "call" : "check")}
+            >
+                { canCall ? "Call" : canCheck ? "Check" : "-" } 
+            </button>
+
+            <div className="bet-section">
+                <input
+                    type="number"
+                    min={minRaise}
+                    max={maxRaise}
+                    value={betAmount}
+                    onChange={(e) => setBetAmount(e.target.value)}
+                    placeholder={minRaise != null ? `${minRaise}-${maxRaise ?? '∞'}` : "Amount"}
+                />
+                {maxRaise != null && (
+                <button className="bet-quick" onClick={() => setBetAmount(String(maxRaise))}>
+                    Pot
+                </button>                
+                )}
+                <button className={`bet ${ !canBet ? "disabled" : ""}`}
+                disabled={disabled || !canBet}
+                onClick={handleBet}
+                >
+                    {player?.bet > 0 ? "Raise" : "Bet"}
+                {/* {player?.contributionCurrentStreet > 0 ? "Raise" : "Bet"} */}
+                </button>
+            </div>
         </div>
     );
 };

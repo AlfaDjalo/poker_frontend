@@ -1,0 +1,216 @@
+/* ═══════════════════════════════════════════
+   HandBrowser
+   ═══════════════════════════════════════════ */
+
+.hand-browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #0a0c0f;
+    border-right: 1px solid #1a1f2e;
+    font-family: 'Courier New', Courier, monospace;
+    color: #c8d0e0;
+    min-width: 220px;
+    max-width: 280px;
+}
+
+/* ── Header ── */
+.hand-browser__header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 12px 10px;
+    border-bottom: 1px solid #1a1f2e;
+}
+
+.hand-browser__title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f59e0b;
+}
+
+.hand-browser__filter {
+    background: #111318;
+    border: 1px solid #2a3448;
+    border-radius: 6px;
+    color: #c8d0e0;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f59e0b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
+}
+
+.hand-browser__filter:focus {
+    outline: none;
+    border-color: #f59e0b;
+}
+
+/* ── Fast nav ── */
+.hand-browser__hand-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #1a1f2e;
+    gap: 6px;
+}
+
+.hb-nav-btn {
+    flex: 1;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 6px;
+    color: #f59e0b;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 6px 4px;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+.hb-nav-btn:hover:not(:disabled) {
+    background: rgba(245,158,11,0.15);
+}
+
+.hb-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ── List ── */
+.hand-browser__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3448 transparent;
+}
+
+.hand-browser__list::-webkit-scrollbar {
+    width: 4px;
+}
+.hand-browser__list::-webkit-scrollbar-thumb {
+    background: #2a3448;
+    border-radius: 2px;
+}
+
+.hand-browser__loading,
+.hand-browser__error,
+.hand-browser__empty {
+    font-size: 11px;
+    text-align: center;
+    padding: 20px;
+    color: #3d4a60;
+}
+
+.hand-browser__error {
+    color: #f87171;
+}
+
+/* ── Hand row ── */
+.hand-row {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #111318;
+    transition: background 0.12s;
+}
+
+.hand-row:hover {
+    background: rgba(245,158,11,0.06);
+}
+
+.hand-row--selected {
+    background: rgba(245,158,11,0.12);
+    border-left: 3px solid #f59e0b;
+    padding-left: 9px;
+}
+
+.hand-row__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+}
+
+.hand-row__variant {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2c97e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.hand-row__id {
+    font-size: 10px;
+    color: #3d4a60;
+    flex-shrink: 0;
+}
+
+.hand-row__bottom {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #6b7a94;
+}
+
+.hand-row__pot {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+.hand-row__players {
+    font-size: 10px;
+    color: #3d4a60;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Pagination ── */
+.hand-browser__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-top: 1px solid #1a1f2e;
+}
+
+.hb-page-btn {
+    background: transparent;
+    border: 1px solid #2a3448;
+    border-radius: 4px;
+    color: #6b7a94;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    padding: 4px 8px;
+    transition: all 0.15s;
+}
+
+.hb-page-btn:hover:not(:disabled) {
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.hb-page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.hand-browser__page-info {
+    font-size: 10px;
+    color: #3d4a60;
+}

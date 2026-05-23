@@ -1,153 +1,158 @@
 /* =====================================================
    Poker table container — mahogany surround
+   =====================================================
+   The container itself provides the brown background.
+   Vertical padding gives seats room to protrude above/below
+   the felt ellipse without being clipped.
    ===================================================== */
 
 .poker-table-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #592703;
-  /* Vertical padding gives room for top/bottom seats that protrude */
-  padding: 60px 20px;
-  box-sizing: border-box;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #592703;
+    /* Enough room for seats (≈ 70px tall) to overhang the felt */
+    padding: 52px 20px;
+    box-sizing: border-box;
+    /* Fill whatever height is given to us */
+    height: 100%;
+    width: 100%;
+    /* Must be visible so seats protruding outside the felt ellipse are not clipped */
+    overflow: visible;
 }
 
 /* =====================================================
-   Main table — original proportions restored
-   The div is intentionally smaller than the visual table;
-   seats sit on the felt edge and protrude outward.
-   overflow: visible lets them render without clipping.
+   Main table
    ===================================================== */
 
 .poker-table {
-  position: relative;
-  width: min(88vw, 88vh * 2.2);
-  height: min(40vh, 88vw / 2.2);
-  max-width: 1000px;
-  max-height: 480px;
-  min-width: 320px;
-  min-height: 220px;
-  overflow: visible;
+    position: relative;
+    /* Responsive size: fill available space while keeping aspect ratio */
+    width: min(90vw, calc(100% - 40px));
+    /* height tracks width at a 2.2:1 aspect ratio, capped sensibly */
+    aspect-ratio: 2.2 / 1;
+    max-width: 1000px;
+    /* No hard pixel min — let small screens be small */
+    min-width: 280px;
+    /* IMPORTANT: overflow visible so seats can protrude outside the div */
+    overflow: visible;
 }
 
 /* Outer ellipse — green felt */
 .table-outer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 85%;
-  background-color: #228B22;
-  border: 4px solid #2F4F2F;
-  border-radius: 50%;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 85%;
+    background-color: #228B22;
+    border: 4px solid #2F4F2F;
+    border-radius: 50%;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Inner ellipse — betting line */
 .table-inner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 75%;
-  height: 75%;
-  border: 2px dashed #CCCCCC;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 75%;
+    height: 75%;
+    border: 2px dashed #CCCCCC;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
 }
 
 .table-inner.active {
-  border-color: #FFD700;
-  border-width: 3px;
+    border-color: #FFD700;
+    border-width: 3px;
 }
 
 .table-inner.hovered {
-  box-shadow: 0 0 25px 5px rgba(0, 255, 0, 0.5);
+    box-shadow: 0 0 25px 5px rgba(0, 255, 0, 0.5);
 }
 
 /* =====================================================
-   Board area — centred inside inner ellipse
+   Board / CAP board area
    ===================================================== */
 
 .board-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 65%;
-  height: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%;
+    height: 55%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .cap-board-wrapper {
-  width: 100%;
-  height: 180px;
-  position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    position: relative;
 }
 
 /* =====================================================
    Seat positioning
-   =====================================================
-   Seats sit on the perimeter of the green felt.
-   Each seat is centred on the felt edge using negative
-   translate so half the seat is inside, half outside.
-   overflow: visible on .poker-table allows this.
-
-   The right-side seats (2, 3) are anchored with right:
-   values that keep them on the felt — NOT pushed into
-   the sidebar. The game-layout container provides the
-   separation between the table and sidebar.
+   Seats are centred on the felt perimeter.  Each seat
+   uses a negative translate to straddle the edge.
+   overflow: visible on .poker-table allows protrusion.
    ===================================================== */
 
 .seat {
-  position: absolute;
+    position: absolute;
+    /* Prevent the seat box from clipping its children (cards, hands) */
+    overflow: visible;
+    z-index: 20;
 }
 
 /* Seat 1 — top centre */
 .seat-1 {
-  top: 7%;
-  left: 50%;
-  transform: translate(-50%, -100%);
+    top: 14%;
+    left: 50%;
+    transform: translate(-50%, -100%);
 }
 
 /* Seat 2 — right upper */
 .seat-2 {
-  top: 22%;
-  right: 0%;
-  transform: translate(50%, -50%);
+    top: 22%;
+    right: 10%;
+    transform: translate(50%, -50%);
 }
 
 /* Seat 3 — right lower */
 .seat-3 {
-  bottom: 22%;
-  right: 0%;
-  transform: translate(50%, 50%);
+    bottom: 22%;
+    right: 10%;
+    transform: translate(50%, 50%);
 }
 
 /* Seat 4 — bottom centre */
 .seat-4 {
-  bottom: 7%;
-  left: 50%;
-  transform: translate(-50%, 100%);
+    bottom: 16%;
+    left: 50%;
+    transform: translate(-50%, 100%);
 }
 
 /* Seat 5 — left lower */
 .seat-5 {
-  bottom: 22%;
-  left: 0%;
-  transform: translate(-50%, 50%);
+    bottom: 22%;
+    left: 10%;
+    transform: translate(-50%, 50%);
 }
 
 /* Seat 6 — left upper */
 .seat-6 {
-  top: 22%;
-  left: 0%;
-  transform: translate(-50%, -50%);
+    top: 22%;
+    left: 10%;
+    transform: translate(-50%, -50%);
 }
 
 /* =====================================================
@@ -155,44 +160,23 @@
    ===================================================== */
 
 @media (max-width: 768px) {
-  .poker-table-container {
-    padding: 50px 10px;
-  }
+    .poker-table-container {
+        padding: 44px 10px;
+    }
 
-  .poker-table {
-    width: min(92vw, 92vh * 1.8);
-    height: min(42vh, 92vw / 1.8);
-  }
-
-  .table-outer {
-    height: 90%;
-  }
-
-  .board-container {
-    width: 70%;
-    height: 55%;
-  }
+    .board-container {
+        width: 70%;
+        height: 55%;
+    }
 }
 
 @media (max-width: 480px) {
-  .poker-table-container {
-    padding: 45px 8px;
-  }
+    .poker-table-container {
+        padding: 38px 6px;
+    }
 
-  .poker-table {
-    width: min(96vw, 96vh * 1.6);
-    height: min(44vh, 96vw / 1.6);
-  }
-
-  .board-container {
-    width: 75%;
-    height: 60%;
-  }
-}
-
-@media (min-width: 1200px) {
-  .poker-table {
-    width: min(80vw, 80vh * 2.4);
-    height: min(38vh, 80vw / 2.4);
-  }
+    .board-container {
+        width: 75%;
+        height: 60%;
+    }
 }

@@ -1,0 +1,199 @@
+/* ═══════════════════════════════════════════
+   ReplayControls — transport bar
+   Dark poker-table aesthetic, amber accents
+   ═══════════════════════════════════════════ */
+
+.replay-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: linear-gradient(180deg, #1a1209 0%, #0f0b05 100%);
+    border: 1px solid #3d2e10;
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,200,50,0.08);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* ── Label row ── */
+.replay-controls__label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 22px;
+}
+
+.replay-controls__street-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.replay-controls__action-label {
+    font-size: 13px;
+    color: #d1c8b0;
+    letter-spacing: 0.02em;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.replay-controls__action-label.muted {
+    color: #6b6147;
+    font-style: italic;
+}
+
+.replay-controls__action-label.highlight {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* ── Scrubber ── */
+.replay-controls__scrubber-wrap {
+    position: relative;
+    padding-top: 12px;   /* space for tick marks */
+}
+
+.replay-controls__ticks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    pointer-events: none;
+}
+
+.replay-controls__tick {
+    position: absolute;
+    top: 2px;
+    width: 2px;
+    height: 6px;
+    background: rgba(245, 158, 11, 0.5);
+    border-radius: 1px;
+    transform: translateX(-50%);
+}
+
+.replay-controls__scrubber {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+        to right,
+        #f59e0b 0%,
+        #f59e0b calc(var(--progress, 0) * 100%),
+        #2d2415 calc(var(--progress, 0) * 100%)
+    );
+    outline: none;
+    cursor: pointer;
+}
+
+.replay-controls__scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #1a1209;
+    box-shadow: 0 0 6px rgba(245,158,11,0.6);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.replay-controls__scrubber::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.replay-controls__scrubber::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #1a1209;
+    cursor: pointer;
+}
+
+/* ── Transport row ── */
+.replay-controls__transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.replay-btn {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 8px;
+    color: #f59e0b;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 8px 14px;
+    transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.replay-btn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.22);
+    box-shadow: 0 0 10px rgba(245,158,11,0.3);
+}
+
+.replay-btn:active:not(:disabled) {
+    transform: scale(0.93);
+}
+
+.replay-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.replay-btn--jump {
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+.replay-controls__counter {
+    font-size: 12px;
+    color: #6b6147;
+    letter-spacing: 0.08em;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* ── Toggles ── */
+.replay-controls__toggles {
+    display: flex;
+    justify-content: center;
+}
+
+.replay-toggle {
+    background: transparent;
+    border: 1px solid #3d2e10;
+    border-radius: 6px;
+    color: #6b6147;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 5px 12px;
+    transition: all 0.15s ease;
+}
+
+.replay-toggle:hover {
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #b8a060;
+}
+
+.replay-toggle.active {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #f59e0b;
+}

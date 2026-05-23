@@ -1,0 +1,51 @@
+.deckGrid {
+  display: grid;
+  grid-template-columns: 1fr; /* default: 1 suit per row (mobile) */
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .deckGrid {
+    grid-template-columns: 1fr 1fr; /* laptop: 2 suits per row */
+  }
+}
+
+.suitRow {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.poker-card {
+  width: 2.2rem;   /* shrink card size */
+  height: auto;    /* keep correct aspect ratio */
+}
+
+.poker-card-placeholder {
+  width: 50px;                   /* Same base width as Card */
+  aspect-ratio: 2 / 3;           /* same as Card */
+  border-radius: 0.25rem;        /* if Card uses this */
+  border: 1px solid transparent; /* same space as card border */
+  background-color: transparent;
+  transform: scale(0.8);         /* Same scale as applied to Card */
+  transform-origin: center;      /* Match Card's transform origin */
+}
+
+/* Responsive adjustments to match Card.css exactly */
+@media (max-width: 480px) {
+  .poker-card-placeholder {
+    width: 45px;  /* Same base width as Card on small screens */
+  }
+}
+
+@media (min-width: 1920px) {
+  .poker-card-placeholder {
+    width: 70px;  /* Same base width as Card on large screens */
+  }
+}
+
+.card-selector.hovered {
+  outline: 3px dashed red;
+  background-color: rgba(255, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+}

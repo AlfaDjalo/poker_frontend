@@ -45,12 +45,12 @@ const DroppableSlot = ({
             isSelected={normCard?.selected}
             isActiveTarget={activeSlot === index}
             showOutline={showSlots}
-            isClickable={true}
-            onClick={(e) => {
-              e.stopPropagation(); // prevent BoardArea click
-              if (normCard) onCardClick(index);
-              else onSlotClick(index);
-            }}
+            isClickable={false}
+            // onClick={(e) => {
+            //   e.stopPropagation(); // prevent BoardArea click
+            //   if (normCard) onCardClick(index);
+            //   else onSlotClick(index);
+            // }}
           />
         </DraggableCard>
       ) : (
