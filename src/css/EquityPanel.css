@@ -1,0 +1,438 @@
+/* EquityPanel.css
+   Dark/amber CAP aesthetic.
+   Mirrors the visual language of AnnotationPanel.css and ShowdownSummary.css.
+*/
+
+/* ─────────────────────────────────────────────────────────────────
+   Panel shell
+───────────────────────────────────────────────────────────────── */
+.equity-panel {
+    display: flex;
+    flex-direction: column;
+    background: #0d0f14;
+    border: 1px solid #1e2330;
+    border-radius: 8px;
+    overflow: hidden;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+    color: #c8cdd8;
+    width: 100%;
+    max-width: 340px;
+    min-width: 220px;
+    box-sizing: border-box;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Header
+───────────────────────────────────────────────────────────────── */
+.equity-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 9px;
+    border-bottom: 1px solid #1e2330;
+    background: #111420;
+}
+
+.equity-panel__title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f59e0b;
+}
+
+.equity-panel__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Buttons
+───────────────────────────────────────────────────────────────── */
+.eq-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 4px 10px;
+    transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap;
+}
+
+.eq-btn--primary {
+    background: #f59e0b;
+    color: #0d0f14;
+}
+.eq-btn--primary:hover:not(:disabled) {
+    background: #fbbf24;
+}
+.eq-btn--primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.eq-btn--ghost {
+    background: transparent;
+    color: #6b7280;
+    border: 1px solid #1e2330;
+}
+.eq-btn--ghost:hover {
+    background: #1e2330;
+    color: #c8cdd8;
+}
+
+.eq-btn--sm {
+    padding: 2px 8px;
+    font-size: 10px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Body
+───────────────────────────────────────────────────────────────── */
+.equity-panel__body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Error state
+───────────────────────────────────────────────────────────────── */
+.eq-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #f87171;
+}
+.eq-error__icon {
+    flex-shrink: 0;
+    font-size: 13px;
+}
+.eq-error__msg {
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Spinner
+───────────────────────────────────────────────────────────────── */
+.eq-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 0;
+}
+
+.eq-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #1e2330;
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: eq-spin 0.7s linear infinite;
+}
+
+@keyframes eq-spin {
+    to { transform: rotate(360deg); }
+}
+
+.eq-spinner-label {
+    font-size: 11px;
+    color: #6b7280;
+    letter-spacing: 0.06em;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Controls row — just the "Show" scope select now
+───────────────────────────────────────────────────────────────── */
+.eq-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.eq-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.eq-metric-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.eq-metric-bar__label {
+    font-size: 9.5px;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+}
+
+.eq-scope-select {
+    background: #111420;
+    color: #e5e7eb;
+    border: 1px solid #1e2330;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+    max-width: 160px;
+}
+.eq-scope-select:hover,
+.eq-scope-select:focus {
+    border-color: #f59e0b;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Scroll containers — used both for the main player table (capped
+   height, scrolls if there are too many players) and for the
+   detail-table inside an expanded row (horizontal scroll only).
+───────────────────────────────────────────────────────────────── */
+.eq-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.eq-table-scroll--players {
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #1e2330;
+    border-radius: 6px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Tables (shared base + main player table + nested detail table)
+───────────────────────────────────────────────────────────────── */
+.eq-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5px;
+}
+
+.eq-table thead th {
+    padding: 6px 8px;
+    text-align: right;
+    color: #4b5563;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 9px;
+    border-bottom: 1px solid #1e2330;
+    white-space: nowrap;
+    background: #111420;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.eq-table__player-col {
+    text-align: left !important;
+    min-width: 90px;
+}
+
+.eq-table__point-col {
+    min-width: 64px;
+}
+
+.eq-table__row {
+    border-bottom: 1px solid #151820;
+}
+.eq-table__row:last-child {
+    border-bottom: none;
+}
+
+/* Main table rows are clickable to expand player detail */
+.eq-table--main .eq-table__row--clickable {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.eq-table--main .eq-table__row--clickable:hover {
+    background: #151820;
+}
+.eq-table--main .eq-table__row--expanded {
+    background: #111420;
+}
+.eq-table__row--detail {
+    background: #0d0f14;
+    cursor: default;
+}
+.eq-table__row--detail:hover {
+    background: #0d0f14;
+}
+.eq-table__row--detail > td {
+    padding: 0 8px 10px;
+}
+
+.eq-table__player-cell {
+    padding: 7px 8px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.25;
+}
+
+.eq-table__player-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #e5e7eb;
+    font-weight: 600;
+}
+
+.eq-table--main .eq-table__val-cell {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.eq-table__val-cell {
+    padding: 7px 8px;
+    text-align: right;
+    color: #6b7280;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
+}
+
+.eq-seat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 8px;
+}
+
+.eq-chevron {
+    flex: 0 0 12px;
+    text-align: center;
+    color: #4b5563;
+    font-size: 11px;
+    transition: transform 0.15s, color 0.15s;
+}
+.eq-chevron--open {
+    color: #9ca3af;
+    transform: rotate(180deg);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Expanded player detail box
+───────────────────────────────────────────────────────────────── */
+.eq-player-row__detail {
+    padding: 4px 4px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    background: #0d0f14;
+    border: 1px solid #1e2330;
+    border-radius: 6px;
+}
+
+.eq-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 8px;
+}
+
+.eq-stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: #111420;
+    border: 1px solid #1e2330;
+    border-radius: 4px;
+    padding: 5px 8px;
+}
+
+.eq-stat__label {
+    font-size: 9.5px;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.eq-stat__value {
+    font-size: 12px;
+    font-weight: 700;
+    color: #c8cdd8;
+    font-variant-numeric: tabular-nums;
+}
+.eq-stat__value--scoop {
+    color: #4ade80;
+}
+.eq-stat__value--split {
+    color: #38bdf8;
+}
+
+.eq-player-row__detail .eq-table-scroll {
+    padding: 0 8px 8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Footer
+───────────────────────────────────────────────────────────────── */
+.eq-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid #151820;
+    font-size: 9.5px;
+    color: #374151;
+}
+
+.eq-footer__meta {
+    letter-spacing: 0.04em;
+}
+
+.eq-footer__time {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Empty state
+───────────────────────────────────────────────────────────────── */
+.eq-empty {
+    font-size: 11px;
+    color: #374151;
+    text-align: center;
+    padding: 14px 0 6px;
+    line-height: 1.5;
+}
+
+.eq-empty strong {
+    color: #6b7280;
+}

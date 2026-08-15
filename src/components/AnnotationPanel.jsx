@@ -38,7 +38,7 @@ const AnnotationPanel = ({
     //   hand-level frames → a.action_id is null
     //   action frames     → a.action_id matches the numeric actionId exactly
     const relevant = annotations.filter(a =>
-        isHandLevel ? a.actionId == null : a.action_id === actionId
+        isHandLevel ? a.action_id == null : a.action_id === actionId
     );
 
     const [annoIdx, setAnnoIdx] = useState(0);

@@ -1,62 +1,88 @@
 .player-action-panel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin: 1rem 0;
-  background: #1e1e1e;
-  padding: 1rem 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #12141a;
+    border: 1px solid #2a2f3a;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
 }
 
 .player-action-panel button {
-  min-width: 80px;
-  font-weight: 600;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  transition: background 0.2s ease, transform 0.1s ease;
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid #3d4a60;
+    background: #1b1f2a;
+    color: #e5e7eb;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
 }
 
-.player-action-panel button:active {
-  transform: scale(0.97);
+.player-action-panel button:hover:not(:disabled) {
+    background: #262c3a;
 }
 
-.player-action-panel input[type="number"] {
-  width: 80px;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid #888;
-  border-radius: 0.4rem;
-  background: #222;
-  color: white;
+/* Illegal-for-this-decision actions: greyed out AND functionally
+   unclickable. The native `disabled` attribute already prevents
+   onClick from firing regardless of CSS — pointer-events/opacity here
+   are purely so that's also visually obvious, not what actually
+   blocks the click. */
+.player-action-panel button:disabled,
+.player-action-panel button.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: #14161c;
+    color: #6b7280;
+    border-color: #2a2f3a;
 }
 
-/* Button states */
 .player-action-panel .fold {
-  background-color: #e74c3c;
+    border-color: #7f1d1d;
 }
-.player-action-panel .fold:hover {
-  background-color: #c0392b;
+.player-action-panel .fold:hover:not(:disabled) {
+    background: #2a1414;
 }
 
 .player-action-panel .call {
-  background-color: #3498db;
+    border-color: #14532d;
 }
-.player-action-panel .call:hover {
-  background-color: #2c80b4;
+.player-action-panel .call:hover:not(:disabled) {
+    background: #10241a;
 }
 
 .player-action-panel .bet {
-  background-color: #27ae60;
+    border-color: #1e3a8a;
 }
-.player-action-panel .bet:hover {
-  background-color: #1e874b;
+.player-action-panel .bet:hover:not(:disabled) {
+    background: #0f1d3d;
 }
 
-.player-action-panel .disabled {
-  background-color: #555;
-  cursor: not-allowed;
-  opacity: 0.5;
+.player-action-panel .bet-section {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.player-action-panel .bet-section input[type="number"] {
+    width: 90px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    border: 1px solid #3d4a60;
+    background: #0d0f14;
+    color: #e5e7eb;
+    font-family: inherit;
+}
+
+.player-action-panel .bet-section input[type="number"]:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.player-action-panel .bet-quick {
+    padding: 8px 12px;
+    border-color: #3d4a60;
 }

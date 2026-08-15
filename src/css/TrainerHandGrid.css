@@ -1,0 +1,133 @@
+.trainer-hand-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #0b0d10;
+    border: 1px solid #2a2f38;
+    border-radius: 8px;
+    padding: 14px;
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+}
+
+.trainer-hand-grid__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.trainer-hand-grid__title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.trainer-hand-grid__subtitle {
+    margin-left: 10px;
+    font-size: 12px;
+    opacity: 0.65;
+}
+
+.trainer-hand-grid__legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.trainer-hand-grid__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.trainer-hand-grid__legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.trainer-hand-grid__close {
+    background: transparent;
+    border: 1px solid #3d4a60;
+    color: #e2e8f0;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+}
+.trainer-hand-grid__close:hover {
+    background: #1c2230;
+}
+
+.trainer-hand-grid__status {
+    padding: 30px;
+    text-align: center;
+    opacity: 0.6;
+}
+.trainer-hand-grid__status--error {
+    color: #f87171;
+    opacity: 1;
+}
+
+.trainer-hand-grid__body {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.hand-grid-169 {
+    display: grid;
+    grid-template-columns: repeat(13, minmax(28px, 1fr));
+    grid-template-rows: repeat(13, minmax(28px, 1fr));
+    gap: 2px;
+    width: min(560px, 100%);
+    aspect-ratio: 1 / 1;
+}
+
+.hand-cell {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    cursor: pointer;
+    background: #1a1d23;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hand-cell.selected {
+    outline: 2px solid #ffffff;
+    outline-offset: -2px;
+    z-index: 1;
+}
+
+.hand-cell__bar {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column-reverse; /* first action in actionOrder stacks from the bottom up */
+}
+
+.hand-cell__segment {
+    width: 100%;
+}
+
+.hand-cell__label {
+    position: relative;
+    font-size: 9px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0 2px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.85);
+    pointer-events: none;
+}
+
+@media (max-width: 480px) {
+    .hand-cell__label { font-size: 7px; }
+}

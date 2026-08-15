@@ -189,7 +189,70 @@
    Table on left, showdown sidebar pinned to the right
    ===================================================== */
 
+/* =====================================================
+   Game layout — fills remaining height
+   ===================================================== */
+
 .game-layout {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    align-items: stretch;
+    overflow: hidden;
+}
+
+.game-layout__main {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+}
+
+/* Container around PokerTable to create breathing room for top/bottom seats */
+.table-container {
+    flex: 1 1 0;
+    min-height: 0;
+    position: relative;
+    padding: 24px 16px; /* Prevents top/bottom player cards from clipping or sticking out */
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Sidebar — right-justified, collapsible scrollable container */
+.game-layout__sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    padding: 12px;
+    box-sizing: border-box;
+    background: #0a0c0f;
+    border-left: 1px solid #1a1f2e;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 15;
+}
+
+@media (max-width: 900px) {
+    .game-layout {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .game-layout__sidebar {
+        width: 100%;
+        padding: 12px 8px;
+        border-left: none;
+        border-top: 1px solid #1a1f2e;
+    }
+}
+   
+/* .game-layout {
     display: flex;
     flex: 1 1 0;
     min-height: 0;
@@ -197,19 +260,19 @@
     align-items: stretch;
     /* overflow: visible so that player seats protruding outside the table
        felt are never clipped by the layout container */
-    overflow: visible;
-}
+    /* overflow: visible; */
+/* } */
 
-.game-layout__main {
+/* .game-layout__main {
     flex: 1 1 0;
     min-width: 0;
     overflow: visible;
     position: relative;
     z-index: 10;
-}
+} */ */
 
 /* Showdown sidebar — right-justified, fixed width */
-.game-layout__sidebar {
+/* .game-layout__sidebar {
     width: 280px;
     flex-shrink: 0;
     padding: 10px 8px;
@@ -219,7 +282,7 @@
     overflow-y: auto;
     align-self: stretch;
     /* Pushes to far right naturally via flex order */
-    order: 2;
+    /* order: 2;
     z-index: 5;
     position: relative;
 }
@@ -235,8 +298,8 @@
         border-top: 1px solid #1a1f2e;
         order: 2;
     }
-}
-
+} */
+ */
 /* =====================================================
    Misc
    ===================================================== */

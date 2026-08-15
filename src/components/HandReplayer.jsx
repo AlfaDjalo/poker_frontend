@@ -1,15 +1,26 @@
 import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import PokerTable from "./PokerTable";
 import ShowdownSummary from "./ShowdownSummary";
 import ReplayControls from "./ReplayControls";
 import HandBrowser from "./HandBrowser";
 import AnnotationPanel from "./AnnotationPanel";
+import HandEditor from "./HandEditor";
+import EquityPanel from './EquityPanel';
 
 import { fetchHand, fetchAnnotations } from "../api/replayAPI";
+import { fetchTutorialHand } from "../api/tutorialApi";
 import { useReplay } from "../hooks/useReplay";
-
+import { useHandEditor } from "../hooks/useHandEditor";
+import { useEquity, buildEquityParamsFromFrame } from '../hooks/useEquity';
 import "../css/HandReplayer.css";
+
+// Settings - wire to a settings store when built
+const EDITOR_SETTINGS = {
+    replayer_editing_enabled: true,
+    show_discard_pile: true,
+};
 
 /**
  * HandReplayer
@@ -29,46 +40,69 @@ import "../css/HandReplayer.css";
  *
  * The union of both sets is passed to buildDisplayPlayers / buildDisplayNodes.
  */
-const HandReplayer = () => {
+const HandReplayer = ({
+    defaultSource = "all",
+    showCreateButton = false,
+    onCreateHand,
+} = {}) => {
+    const navigate = useNavigate();
+
     const [handData, setHandData]           = useState(null);
     const [selectedHandId, setSelectedHandId] = useState(null);
+    const [isHypothetical, setIsHypothetical] = useState(false);
     const [loading, setLoading]             = useState(false);
     const [error, setError]                 = useState(null);
-
-    // showAllCards: when false only the hero's cards are visible during play;
-    // board cards are ALWAYS visible regardless of this setting.
     const [showAllCards, setShowAllCards]   = useState(true);
-    
     const [annotations, setAnnotations]     = useState([]);
-
-    // User-driven card toggles — persist within a hand, cleared on navigation
-    // to a different frame or when a new hand is loaded.
     const [userCards, setUserCards] = useState([]);
-
-    // Annotation-driven highlights (replaced on each annotation view event,
-    // cleared when the frame advances so they don't bleed into other frames).
     const [annoCards, setAnnoCards] = useState([]);
     
-    // Merged highlight set used for display
     const highlightedCards = [...new Set([...userCards, ...annoCards])];
 
     const replay = useReplay(handData);
     const { currentFrame, frames, cursor } = replay;
+    const { equity, loading: equityLoading, error: equityError, calculate, clear: clearEquity } = useEquity();
+
+    // ── Hand editor (replayer mode) ───────────────────────────────
+    const editor = useHandEditor({
+        mode: "replayer",
+        frame: currentFrame,
+        handData,
+        onApplied: (loadedState) => {
+            navigate("/");
+        },
+        onCancelled: () => { /* stay on replayer */},
+    });
 
     // ── Load a hand by id ─────────────────────────────────
-    const loadHand = useCallback(async (id) => {
+    // source: { isHypothetical } — passed through from HandBrowser's
+    // onSelectHand so we know whether to hit /replay/hands/{id} or
+    // /tutorial/hands/{id}. Tutorial (hypothetical) hands don't yet
+    // support annotations server-side, so we skip that fetch for them.
+    const loadHand = useCallback(async (id, { isHypothetical: hypo = false } = {}) => {
+        if (id == null) {
+            setHandData(null);
+            setSelectedHandId(null);
+            return;
+        }
         setLoading(true)
         setError(null);
         // Clear all card selections when switching hands.
         setUserCards([]);
         setAnnoCards([]);
         try {
-            const data = await fetchHand(id);
+            const data = hypo ? await fetchTutorialHand(id) : await fetchHand(id);
             setHandData(data);
+            setIsHypothetical(hypo);
+            clearEquity();
             setSelectedHandId(id);
             replay.resetCursor();
-            const anns = await fetchAnnotations(id);
-            setAnnotations(anns);
+            if (!hypo) {
+                const anns = await fetchAnnotations(id);
+                setAnnotations(anns);
+            } else {
+                setAnnotations([]);
+            }
         } catch (e) {
             setError("Failed to load hand.");
         } finally {
@@ -104,28 +138,33 @@ const HandReplayer = () => {
     // ── Navigation wrappers — clear selections on every step ──────   
     const handleStepForward = useCallback(() => {
         clearAllCards();
+        clearEquity();
         replay.stepForward();
-    }, [clearAllCards, replay]);
+    }, [clearEquity, clearAllCards, replay]);
 
     const handleStepBack = useCallback(() => {
         clearAllCards();
+        clearEquity();
         replay.stepBack();
-    }, [clearAllCards, replay]);
+    }, [clearEquity, clearAllCards, replay]);
 
     const handleJumpToStart = useCallback(() => {
         clearAllCards();
+        clearEquity();
         replay.jumpToStart();
-    }, [clearAllCards, replay]);
+    }, [clearEquity, clearAllCards, replay]);
 
     const handleJumpToEnd = useCallback(() => {
         clearAllCards();
+        clearEquity();
         replay.jumpToEnd();
-    }, [clearAllCards, replay]);
+    }, [clearEquity, clearAllCards, replay]);
 
     const handleScrub = useCallback((i) => {
         clearAllCards();
+        clearEquity();
         replay.jumpToFrame(i);
-    }, [clearAllCards, replay]);
+    }, [clearEquity, clearAllCards, replay]);
 
     // ── Annotation refresh helper ─────────────────────────────────
     const refreshAnnotations = useCallback(async () => {
@@ -134,17 +173,86 @@ const HandReplayer = () => {
         setAnnotations(anns);
     }, [selectedHandId]);
 
+    const handleCalculateEquity = () => {
+        const params = buildEquityParamsFromFrame(currentFrame, handData?.variant_name);
+        if (params) calculate(params);
+    };
+
     // ── Build display objects ─────────────────────────────────────    
     const displayPlayers = buildDisplayPlayers(currentFrame, showAllCards, highlightedCards);
     const displayNodes   = buildDisplayNodes(currentFrame, highlightedCards);
 
+    const editorDisplayPlayers = buildEditorDisplayPlayers(editor.editState, displayPlayers);
+    const editorDisplayNodes = buildEditorDisplayNodes(editor.editState, displayNodes);
+
     // frameActionId drives which annotations are shown:
     //   "hand"  → deal / street / showdown frame — show hand-level annotations
     //   number  → action frame — show annotations for that specific action    const rawFrameActionId = currentFrame?.frameActionId;
+    const rawFrameActionId = currentFrame?.frameActionId;
     const frameActionId = currentFrame?.frameActionId ?? "hand";
 
     const isShowdown = currentFrame?.frameType === "showdown";
-    const potDisplay = currentFrame?.pot ?? 0;
+    const potDisplay   = editor.isEditing
+        ? (editor.editState?.pot ?? 0)
+        : (currentFrame?.pot ?? 0);
+
+    const tablePlayers = editor.isEditing ? editorDisplayPlayers : displayPlayers;
+    const tableNodes   = editor.isEditing ? editorDisplayNodes   : displayNodes;
+
+
+    const tableElement = (
+        <PokerTable
+            players={tablePlayers}
+            boardCards={[]}
+            nodes={tableNodes}
+            layoutName={handData?.layout_name}
+            points={[]}
+            showdown={null}
+            dealerSeat={handData?.dealer_seat}
+            actionSeat={null}
+            onSeatClick={() => {}}
+            onPlayerCardClick={(seat, idx) => {
+                if (editor.isEditing) return;
+                const card = displayPlayers[seat]?.hand?.[idx]?.card;
+                if (card) toggleUserCard(card);
+            }}
+            onPlayerSlotClick={() => {}}
+            onBoardCardClick={(idx) => {
+                if (editor.isEditing) return;
+                const card = displayNodes[idx]?.card;
+                if (card) toggleUserCard(card);
+            }}
+            onBoardSlotClick={() => {}}
+            onBoardAreaClick={() => {}}
+            loading={loading}
+        />
+    );    
+
+    function buildEditorDisplayPlayers(editState, fallbackPlayers) {
+        if (!editState) return fallbackPlayers;
+        const players = {};
+        for (const p of editState.players) {
+            players[p.seat] = {
+                seat: p.seat,
+                name: p.name ?? fallbackPlayers?.[p.seat]?.name ?? `Player ${p.seat}`,
+                stack: p.stack,
+                bet: p.current_bet,
+                folded: p.has_folded,
+                hand: p.hole_cards.map(c =>
+                    c ? { card: c, hidden: false, selected: false } : null
+                ),
+                equity: undefined,
+            };
+        }
+        return players;
+    }
+
+    function buildEditorDisplayNodes(editState, fallbackNodes) {
+        if (!editState) return fallbackNodes;
+        return editState.node_cards.map(c =>
+            c ? { card: c, hidden: false, selected: false } : null
+        );
+    }
 
     return (
         <div className="hand-replayer">
@@ -155,6 +263,9 @@ const HandReplayer = () => {
                     selectedHandId={selectedHandId}
                     onSelectHand={loadHand}
                     onHandListChange={() => {}}
+                    defaultSource={defaultSource}
+                    showCreateButton={showCreateButton}
+                    onCreateHand={onCreateHand}
                 />
             </div>
 
@@ -167,8 +278,20 @@ const HandReplayer = () => {
                             <span className="hr-badge hr-badge--variant">{handData.variant_name}</span>
                             <span className="hr-badge hr-badge--layout">{handData.layout_name}</span>
                             <span className="hr-pot">Pot: ${potDisplay}</span>
-                            {currentFrame?.label && (
+                            {currentFrame?.label && !editor.isEditing && (
                                 <span className="hr-label">{currentFrame.label}</span>
+                            )}
+                            {editor.isEditing && (
+                                <span className="hr-badge" style={{ color: "#f59e0b" }}>✏ EDITING</span>
+                            )}
+                            {isHypothetical && !editor.isEditing && (
+                                <button
+                                    className="hr-edit-in-creator-btn"
+                                    onClick={() => navigate(`/tutorial/create?handId=${selectedHandId}`)}
+                                    title="Open in the Hand Creator to edit phases, cards, and bets"
+                                >
+                                    ✏ Edit in Creator
+                                </button>
                             )}
                         </>
                     ) : (
@@ -180,29 +303,26 @@ const HandReplayer = () => {
 
                 <div className="hand-replayer__table-wrap">
                     {handData ? (
-                        <PokerTable
-                            players={displayPlayers}
-                            boardCards={[]}
-                            nodes={displayNodes}
-                            layoutName={handData.layout_name}
-                            points={[]}
-                            showdown={null}
-                            dealerSeat={handData.dealer_seat}
-                            actionSeat={null}
-                            onSeatClick={() => {}}
-                            onPlayerCardClick={(seat, idx) => {
-                                const card = displayPlayers[seat]?.hand?.[idx]?.card;
-                                if (card) toggleUserCard(card);
-                            }}
-                            onPlayerSlotClick={() => {}}
-                            onBoardCardClick={(idx) => {
-                                const card = displayNodes[idx]?.card;
-                                if (card) toggleUserCard(card);
-                            }}
-                            onBoardSlotClick={() => {}}
-                            onBoardAreaClick={() => {}}
-                            loading={loading}
-                        />
+                        editor.isEditing ? (
+                            <HandEditor
+                                mode="replayer"
+                                editState={editor.editState}
+                                validationErrors={editor.validationErrors}
+                                serverErrors={editor.serverErrors}
+                                submitting={editor.submitting}
+                                showDiscardPile={EDITOR_SETTINGS.show_discard_pile}
+                                onMoveCard={editor.moveCard}
+                                onSetPot={editor.setPot}
+                                onApply={undefined}
+                                onPlayFromHere={editor.playFromHere}
+                                onSave={undefined}
+                                onCancel={editor.cancelEdit}
+                            >
+                                {tableElement}
+                            </HandEditor>
+                        ) : (
+                            tableElement
+                        )
                     ) : (
                         <div className="hand-replayer__empty">
                             <div className="hand-replayer__empty-icon">🂠</div>
@@ -213,7 +333,8 @@ const HandReplayer = () => {
                     )}
                 </div>
 
-                {handData && (
+                {handData && !editor.isEditing && 
+                (
                     <div className="hand-replayer__controls">
                         <ReplayControls
                             cursor={cursor}
@@ -229,6 +350,9 @@ const HandReplayer = () => {
                             onScrub={handleScrub}
                             showAllCards={showAllCards}
                             onToggleCards={() => setShowAllCards(v => !v)}
+                            editingEnabled={EDITOR_SETTINGS.replayer_editing_enabled && !isHypothetical}
+                            isEditing={editor.isEditing}
+                            onEditFromHere={editor.beginEdit}
                         />
                     </div>
                 )}
@@ -261,16 +385,32 @@ const HandReplayer = () => {
                         - action frames        → frameActionId is a number → action annotations
                         - showdown frame       → frameActionId is null → hand-level annotations
                         The panel is only suppressed entirely when there is no loaded hand
-                        (guarded by the outer {handData && ...} check). */}
-                    <AnnotationPanel
-                        handId={selectedHandId}
-                        actionId={frameActionId}
-                        annotations={annotations}
-                        selectedCards={highlightedCards}
-                        onAnnotationSaved={refreshAnnotations}
-                        onAnnotationDeleted={refreshAnnotations}
-                        onHighlightCards={handleAnnoHighlight}
-                    />
+                        (guarded by the outer {handData && ...} check), or when viewing a
+                        hypothetical (Tutorial) hand — annotations aren't yet supported
+                        server-side for those. */}
+                    {!isHypothetical && (
+                        <AnnotationPanel
+                            handId={selectedHandId}
+                            actionId={frameActionId}
+                            annotations={annotations}
+                            selectedCards={highlightedCards}
+                            onAnnotationSaved={refreshAnnotations}
+                            onAnnotationDeleted={refreshAnnotations}
+                            onHighlightCards={handleAnnoHighlight}
+                        />
+                    )}
+
+                    {/* Equity panel — shown on all non-showdown frames */}
+                    {!isShowdown && (
+                        <EquityPanel
+                            equity={equity}
+                            players={displayPlayers}
+                            loading={equityLoading}
+                            error={equityError}
+                            onCalculate={handleCalculateEquity}
+                            onClear={clearEquity}
+                        />
+                    )}
 
                     {isShowdown && currentFrame?.payouts?.length > 0 && (
                         <div className="hand-replayer__payouts">

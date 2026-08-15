@@ -1,0 +1,210 @@
+/* ──────────────────────────────────────────────
+   Hand Editor overlay
+────────────────────────────────────────────── */
+
+.hand-editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #060709;
+    color: #c8d0e0;
+    font-family: 'Courier New', monospace;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Top banner */
+.hand-editor__banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #1a1208;
+    border-bottom: 1px solid #f59e0b44;
+    font-size: 13px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.hand-editor__banner-icon {
+    font-size: 16px;
+}
+
+/* Full-width vertical stack: deck (top) → pot → table → discard (bottom) */
+.hand-editor__deck-row {
+    flex-shrink: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    border-bottom: 1px solid #1e2535;
+    background: #0a0c12;
+    padding: 6px 12px;
+}
+
+/* CardSelector renders an <h2> by default; shrink it so this strip stays compact */
+.hand-editor__deck-row h2 {
+    font-size: 12px;
+    margin: 0 0 6px 0;
+    color: #8899aa;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hand-editor__table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    width: 100%;
+    min-height: 480px;
+}
+
+.hand-editor__pot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: #0d1020;
+    border-bottom: 1px solid #1e2535;
+    flex-shrink: 0;
+}
+
+.hand-editor__pot-label {
+    font-size: 12px;
+    color: #8899aa;
+    font-family: 'Courier New', monospace;
+}
+
+.hand-editor__discard-row {
+    flex-shrink: 0;
+    border-top: 1px solid #1e2535;
+    background: #0a0c12;
+    padding: 8px 16px;
+}
+
+/* DiscardPile defaults to a vertical column (sidebar look) — force it
+   horizontal when used as the full-width bottom strip. */
+.hand-editor__discard-row .discard-pile {
+    min-height: 64px;
+}
+.hand-editor__discard-row .discard-pile__cards {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+/* ──────────────────────────────────────────────
+   Editable inputs (stack, pot)
+────────────────────────────────────────────── */
+
+.editable-stack__input,
+.editable-pot__input {
+    width: 80px;
+    background: #0d1020;
+    border: 1px solid #f59e0b88;
+    border-radius: 4px;
+    color: #f59e0b;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 2px 6px;
+    text-align: right;
+    outline: none;
+}
+
+.editable-stack__input:focus,
+.editable-pot__input:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2px #f59e0b22;
+}
+
+.editable-pot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editable-pot__label {
+    font-size: 12px;
+    color: #8899aa;
+    font-family: 'Courier New', monospace;
+}
+
+/* ──────────────────────────────────────────────
+   Editor controls bar
+────────────────────────────────────────────── */
+
+.hand-editor-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #0a0c12;
+    border-top: 1px solid #1e2535;
+    flex-shrink: 0;
+}
+
+.hand-editor-controls__errors {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hand-editor-controls__error {
+    font-size: 12px;
+    color: #f87171;
+    font-family: 'Courier New', monospace;
+}
+
+.hand-editor-controls__buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.editor-btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    letter-spacing: 0.05em;
+}
+
+.editor-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.editor-btn--cancel {
+    background: #1e2535;
+    color: #8899aa;
+}
+.editor-btn--cancel:hover:not(:disabled) {
+    background: #2a3348;
+    color: #c8d0e0;
+}
+
+.editor-btn--apply,
+.editor-btn--play,
+.editor-btn--save {
+    background: #f59e0b;
+    color: #060709;
+}
+.editor-btn--apply:hover:not(:disabled),
+.editor-btn--play:hover:not(:disabled),
+.editor-btn--save:hover:not(:disabled) {
+    background: #fbbf24;
+}
+
+/* ──────────────────────────────────────────────
+   Edit-mode badge on player seats
+   (applied via isEditing prop passed down)
+────────────────────────────────────────────── */
+
+.player-seat.edit-mode {
+    outline: 2px dashed #f59e0b55;
+    outline-offset: 4px;
+}

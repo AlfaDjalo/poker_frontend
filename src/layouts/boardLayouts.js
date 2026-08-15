@@ -64,6 +64,30 @@ export const BOARD_LAYOUTS = {
   },
 
   // -------------------------------------------------------
+  // Hopscotch
+  // Flop 1: nodes 0-2 (top row)
+  // Flop 2: nodes 5-7 (bottom row)
+  // Turn: node 3, river: node 4
+  // Layout: flop(0,1,2) | flop(5,6,7), turn(3), river(3)
+  // -------------------------------------------------------
+  hopscotch: {
+    cardSize: 0.85,
+    positions: [
+      { x: 10, y: 30 },   // node 0 - board1 flop 1
+      { x: 26, y: 30 },   // node 1 - board1 flop 2
+      { x: 42, y: 30 },   // node 2 - board1 flop 3
+      { x: 62, y: 50 },   // node 3 - turn
+      { x: 78, y: 50 },   // node 4 - river
+      { x: 10, y: 70 },   // node 5 - board2 flop 1
+      { x: 26, y: 70 },   // node 6 - board2 flop 2
+      { x: 42, y: 70 },   // node 7 - board2 flop 3
+    ],
+    pointRegions: [
+      { name: "board", labelX: 44, labelY: 8 },
+    ]
+  },
+
+  // -------------------------------------------------------
   // Triple board
   // Board 1: nodes 0-4 (top)
   // Board 2: nodes 5-9 (middle)

@@ -4,7 +4,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from './components/Navbar';
 import GameSimulator from './components/GameSimulator';
 import HandReplayer from './components/HandReplayer';
-// import './App.css';
+import CreationFlow from './components/CreationFlow';
+import TutorialPage from './components/TutorialPage';
+import Trainer from './components/Trainer';
 
 function App() {
   return (
@@ -15,27 +17,13 @@ function App() {
       {/* Page content - offset by navbar height (56px) */}
       <div style={{ paddingTop: 56 }}>
           <Routes>
-            {/* Game Simulator */}
-            <Route
-              path="/"
-              element={<GameSimulator />}
-            />
-
-            {/* Hand Replayer */}
-            <Route
-              path="/replay"
-              element={<HandReplayer />}
-            />
-
-            {/* Placeholders for future pages */}
-            <Route
-                path="/equity"
-                element={<PlaceholderPage title="Equity Calculator" />}
-            />
-            <Route
-                path="/editor"
-                element={<PlaceholderPage title="Hand Editor" />}
-            />
+            <Route path="/"                   element={<GameSimulator />} />
+            <Route path="/replay"             element={<HandReplayer />} />
+            <Route path="/tutorial"           element={<TutorialPage />} />
+            <Route path="/tutorial/create"    element={<CreationFlow />} />
+            <Route path="/trainer"            element={<Trainer />} />
+            <Route path="/equity"             element={<PlaceholderPage title="Equity Calculator" />} />
+            <Route path="/editor"             element={<PlaceholderPage title="Hand Editor" />} />
           </Routes>
         </div >
     </Router>

@@ -5,8 +5,9 @@ import "../css/Navbar.css";
 const NAV_ITEMS = [
     { path: "/",          label: "Game Simulator",  icon: "♠" },
     { path: "/replay",    label: "Hand Replayer",    icon: "⏪" },
+    { path: "/tutorial",  label: "Tutorial",      icon: "📖" },
+    { path: "/trainer",   label: "Trainer",       icon: "🎯" },
     { path: "/equity",    label: "Equity Calculator", icon: "⚖", disabled: true },
-    { path: "/editor",    label: "Hand Editor",      icon: "✏", disabled: true },
 ];
 
 const Navbar = () => {

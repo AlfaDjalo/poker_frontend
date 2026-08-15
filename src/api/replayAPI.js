@@ -14,7 +14,7 @@ export const fetchHands = async ({ limit = 50, offset = 0, variant = null } = {}
 
 export const fetchHand = async (handId) => {
   const res = await fetch(`${API_BASE_URL}/replay/hands/${handId}`);
-  if (!res.ok) throw new Error("Failed to fetch hand ${handId}");
+  if (!res.ok) throw new Error(`Failed to fetch hand ${handId}`);
   return res.json();
 };
  

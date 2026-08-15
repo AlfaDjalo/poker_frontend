@@ -261,3 +261,15 @@
         border-top: 1px solid #1a1f2e;
     }
 }
+
+.hr-edit-in-creator-btn {
+    background: transparent;
+    border: 1px solid #f59e0b;
+    color: #f59e0b;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: auto;
+}

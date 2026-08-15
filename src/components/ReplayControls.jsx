@@ -38,6 +38,10 @@ const ReplayControls = ({
     onScrub,
     showAllCards,
     onToggleCards,
+    // Editor props
+    editingEnabled = false,
+    isEditing = false,
+    onEditFromHere,    
 }) => {
     const progress = totalFrames > 1 ? cursor / (totalFrames - 1) : 0;
 
@@ -55,6 +59,12 @@ const ReplayControls = ({
             streetMarkers.push({ index: i, street: f.street, streetNames: f.street_names });
         }
     });
+
+    const canEditFromHere =
+        editingEnabled &&
+        currentFrame &&
+        currentFrame.frameType !== "showdown" &&
+        currentFrame.frameType !== "deal";
 
     return (
         <div className="replay-controls">
@@ -151,6 +161,16 @@ const ReplayControls = ({
                 >
                     {showAllCards ? "🂠 All Cards Visible" : "🂠 Showdown Only"}
                 </button>
+
+                {canEditFromHere && (
+                    <button
+                        className={`replay-toggle replay-toggle--edit ${isEditing ? "active" : ""}`}
+                        onClick={onEditFromHere}
+                        title="Open hand editor at this point"
+                    >
+                        ✏ Edit from here
+                    </button>
+                )}                
             </div>
         </div>
     );

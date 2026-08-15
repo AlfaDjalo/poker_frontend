@@ -57,12 +57,13 @@ const Hand = ({
     <div className={`hand ${shouldOverlap ? "hand--fan" : ""}`}>
       {slots.map((cardObj, index) => (
         <div
-          key={cardObj?.card || `slot-${seatNumber}-${index}`}
+          key={`hand-slot-${seatNumber}-${index}`}        
+          // key={cardObj?.card || `slot-${seatNumber}-${index}`}
           className="hand__slot-wrapper"
           style={
             shouldOverlap && index > 0
-            ? { marginLeft: overlap }
-            : undefined
+            ? { marginLeft: overlap, zIndex: index }
+            : { zIndex: index }
           }
         >
           <DroppableSlot

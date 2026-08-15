@@ -5,7 +5,12 @@ import ShowdownSummary from './ShowdownSummary';
 import PlayerActionPanel from "./PlayerActionPanel";
 import GameStatusBar from "./GameStatusBar";
 import WinnerBanner from "./WinnerBanner";
+import HandEditor from "./HandEditor";
+// import EditablePot from "./EditablePot";
+import EquityPanel from './EquityPanel';
 
+import { useHandEditor } from '../hooks/useHandEditor';
+import { useEquity, buildEquityParamsFromHand } from '../hooks/useEquity';
 import { restart, startNewHand, sendAction, getVariants } from '../api/pokerApi';
 import "../css/GameSimulator.css";
 
@@ -28,6 +33,12 @@ const formatVariantLabel = (name) =>
 
 const EMPTY_SELECTION = { playerCards: {}, boardCards: []};
 
+// Settings — in future these will come from a settings store
+const EDITOR_SETTINGS = {
+    live_editing_enabled: true,
+    show_discard_pile: true,
+};
+
 const GameSimulator = () =>
 {
     const [hand, setHand] = useState(null);
@@ -43,9 +54,30 @@ const GameSimulator = () =>
     const [animatePot, setAnimatePot] = useState(false);
     const [showWinner, setShowWinner] = useState(false);
 
+    const [showEquity, setShowEquity] = useState(false);
+
     // selectedCards holds the user's card toggle state.
     // Shape: { playerCards: { [seatNum]: string[] }, boardCards: string[] }
     const [selectedCards, setSelectedCards] = useState(EMPTY_SELECTION);
+
+        // ── Hand editor (live mode) ────────────────────────────────────
+    const editor = useHandEditor({
+        mode: "live",
+        hand,
+        onApplied: (newHandState) => {
+            // Backend returns the new game state after apply
+            setHandNormalized(newHandState);
+            setSelectedCards(EMPTY_SELECTION);
+        },
+        onCancelled: () => {
+            // Hand state was already restored server-side via cancelEdit
+            // Re-fetch by restarting — or simply let the user click New Hand
+            // For now we just clear selection; the hand in memory is gone
+            setSelectedCards(EMPTY_SELECTION);
+        },
+    });
+
+    const { equity, loading: equityLoading, error: equityError, calculate, clear: clearEquity } = useEquity();
 
     // Load available variants once on mount
     useEffect(() => {
@@ -77,7 +109,7 @@ const GameSimulator = () =>
  
     // Toggle a single player card in/out of selectedCards.
     const togglePlayerCard = useCallback((seatNum, card) => {
-        setSeleddtedCards(prev => {
+        setSelectedCards(prev => {
             const seatCards = prev.playerCards[seatNum] || [];
             const next = seatCards.includes(card)
                 ? seatCards.filter(c => c !== card)
@@ -106,6 +138,7 @@ const GameSimulator = () =>
         setSelectedGame(pendingGame);
         setSelectedCards(EMPTY_SELECTION);      // clear selection on restart
         setHandNormalized(newHand);
+        clearEquity();
     };
     
     const handleNewHand = async () => {
@@ -113,12 +146,15 @@ const GameSimulator = () =>
         setSelectedGame(pendingGame);
         setSelectedCards(EMPTY_SELECTION);      // clear selection on new hand
         setHandNormalized(newHand);
+        clearEquity();
     };
 
     const handlePlayerAction = async (type, amount) => {
         const updated = await sendAction(type, amount);
         setSelectedCards(EMPTY_SELECTION);      // clear selection on every action
         setHandNormalized(updated);
+        clearEquity();
+        // handleCalculateEquity() // Temp !!!
     }
 
     const handleVariantChange = (e) => {
@@ -188,12 +224,77 @@ const GameSimulator = () =>
         
         return { ...hand, players, board, nodes };
     }
-            
-    const displayHand = applySelection(hand, selectedCards);
+        
+    const handleCalculateEquity = () => {
+        const params = buildEquityParamsFromHand(hand);
+        if (params) calculate(params);
+    };    
+
     
+    // Build display hand — in edit mode we read from editState instead
+    function buildEditDisplayHand(editState, hand) {
+        if (!editState || !hand) return null;
+        // Reconstruct a hand-like object from editState for the table
+        const players = {};
+        for (const p of editState.players) {
+            players[p.seat] = {
+                seat: p.seat,
+                name: hand.players?.[p.seat]?.name ?? `Player ${p.seat}`,
+                stack: p.stack,
+                bet: p.current_bet,
+                folded: p.has_folded,
+                hand: p.hole_cards.map(c => c ? { card: c, hidden: false, selected: false } : null).filter(Boolean),
+                equity: undefined,
+            };
+        }
+        const nodes = editState.node_cards.map(c => c ? { card: c, hidden: false, selected: false } : null);
+        return {
+            ...hand,
+            pot: editState.pot,
+            players,
+            nodes,
+            board: [],
+        };
+    }
+
+    const displayHand = applySelection(hand, selectedCards);
     const handInProgress = isHandInProgress(hand);
     const gameWillChange = pendingGame && pendingGame !== selectedGame;
 
+    
+    // ── Build PokerTable for inside the editor ─────────────────────
+    const tableElement = (
+        <PokerTable
+            players={displayHand ? displayHand.players : {}}
+            boardCards={displayHand ? displayHand.board : []}
+            nodes={displayHand ? displayHand.nodes : []}
+            layoutName={hand?.layout_name}
+            points={hand?.points}
+            showdown={hand?.showdown}
+            dealerSeat={1}
+            actionSeat={editor.isEditing ? null : actionPlayer}
+            onSeatClick={(seatNum) => console.log("Seat clicked:", seatNum)}
+            onPlayerCardClick={(seatNum, cardIndex) => {
+                if (editor.isEditing) return; // drag-and-drop handles it
+                const card = displayHand?.players?.[seatNum]?.hand?.[cardIndex]?.card;
+                if (card) togglePlayerCard(seatNum, card);
+            }}
+            onPlayerSlotClick={(seatNum, slotIndex) =>
+                console.log(`Clicked slot ${slotIndex} for player ${seatNum}`)
+            }
+            onBoardCardClick={(nodeIndex) => {
+                if (editor.isEditing) return;
+                const card = displayHand?.nodes?.[nodeIndex]?.card;
+                if (card) toggleBoardCard(card);
+            }}
+            onBoardSlotClick={(index) => console.log(`Clicked board slot ${index}`)}
+            onBoardAreaClick={() => console.log("Board area clicked")}
+            loading={false}
+        />
+    );
+ 
+    const hasSidebarContent = (isShowdown && hand?.showdown) || showEquity;
+    
     return (
         <div className="game-simulator">
  
@@ -204,8 +305,24 @@ const GameSimulator = () =>
                 <div className="game-header__left">
                     <span className="game-header__title">Crazy Asian Poker</span>
                     <button className="game-btn" onClick={handleRestart}>Restart</button>
-                    <button className="game-btn" onClick={handleNewHand} disabled={handInProgress}>
+                    <button className="game-btn" onClick={handleNewHand} disabled={handInProgress || editor.isEditing}>                    
                         New Hand
+                    </button>
+                    {EDITOR_SETTINGS.live_editing_enabled && hand && !isShowdown && (
+                        <button
+                            className={`game-btn ${editor.isEditing ? "game-btn--active" : ""}`}
+                            onClick={editor.isEditing ? editor.cancelEdit : editor.beginEdit}
+                            style={{ borderColor: "#f59e0b", color: editor.isEditing ? "#f59e0b" : undefined }}
+                        >
+                            {editor.isEditing ? "✕ Cancel Edit" : "✏ Edit"}
+                        </button>
+                    )}
+                    <button 
+                        className={`game-btn ${showEquity ? "game-btn--active" : ""}`}
+                        onClick={() => setShowEquity(prev => !prev)}
+                        style={showEquity ? { borderColor: "#3b82f6", color: "#60a5fa" } : undefined}
+                    >
+                        📊 Equity
                     </button>
                 </div>
  
@@ -222,7 +339,7 @@ const GameSimulator = () =>
                         className={`game-variant-dropdown ${gameWillChange ? "game-variant-dropdown--pending" : ""}`}
                         value={pendingGame || ""}
                         onChange={handleVariantChange}
-                        disabled={variants.length === 0}
+                        disabled={variants.length === 0 || editor.isEditing}
                         title={handInProgress ? "Takes effect on next hand" : "Select a game variant"}
                     >
                         {variants.length === 0 && <option value="">Loading…</option>}
@@ -231,7 +348,6 @@ const GameSimulator = () =>
                         ))}
                     </select>
                 </div>
- 
             </div>
  
             {/* ===== Status / info bar ===== */}
@@ -247,12 +363,103 @@ const GameSimulator = () =>
                 </div>
             </div>
  
-            {showWinner && (
+            {showWinner && !editor.isEditing && (
                 <WinnerBanner hand={hand} onClose={() => setShowWinner(false)} />
             )}
  
+            {/* ===== Main game layout ===== */}
+            {/* ===== Editor overlay (replaces table+sidebar) ===== */}
+            {editor.isEditing ? (
+                <div className="game-layout" style={{ flex: 1, overflow: "hidden" }}>
+                    <HandEditor
+                        mode="live"
+                        editState={editor.editState}
+                        validationErrors={editor.validationErrors}
+                        serverErrors={editor.serverErrors}
+                        submitting={editor.submitting}
+                        showDiscardPile={EDITOR_SETTINGS.show_discard_pile}
+                        onMoveCard={editor.moveCard}
+                        onSetPot={editor.setPot}
+                        onApply={editor.applyEdit}
+                        onPlayFromHere={undefined}
+                        onSave={undefined}
+                        onCancel={editor.cancelEdit}
+                    >
+                        {tableElement}
+                    </HandEditor>
+                </div>
+            ) : (
+                /* ===== Normal play layout ===== */
+                <div className="game-layout">
+                    <div className="game-layout__main">
+                        <div className="table-container">
+                            {tableElement}
+                        </div>
+
+                        {player && (
+                            <PlayerActionPanel
+                                player={player}
+                                availableActions={availableActions}
+                                minRaise={hand?.min_raise}
+                                maxRaise={hand?.max_raise}
+                                disabled={isHandOver}
+                                onAction={handlePlayerAction}
+                            />
+                        )}
+                    </div>
+ 
+{hasSidebarContent && (
+                        <div className="game-layout__sidebar">
+                            {isShowdown && hand?.showdown && (
+                                <ShowdownSummary
+                                    showdown={hand.showdown}
+                                    points={hand.points}
+                                    players={hand.players}
+                                    onSelectHand={setSelectedCards}
+                                    onClose={() => setSelectedCards(EMPTY_SELECTION)}
+                                />
+                            )}
+                            
+                            {showEquity && (
+                                <EquityPanel
+                                    equity={equity}
+                                    players={hand?.players}
+                                    loading={equityLoading}
+                                    error={equityError}
+                                    onCalculate={handleCalculateEquity}
+                                    onClear={clearEquity}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {/* {isShowdown && hand?.showdown && (
+                        <div className="game-layout__sidebar">
+                            <ShowdownSummary
+                                showdown={hand.showdown}
+                                points={hand.points}
+                                players={hand.players}
+                                onSelectHand={setSelectedCards}
+                                onClose={() => setSelectedCards(EMPTY_SELECTION)}
+                            />
+                        </div>
+                    )} */}
+                </div>
+            )}
+{/*  
+            {player && !editor.isEditing && (
+                <PlayerActionPanel
+                    player={player}
+                    availableActions={availableActions}
+                    minRaise={hand?.min_raise}
+                    maxRaise={hand?.max_raise}
+                    disabled={isHandOver}
+                    onAction={handlePlayerAction}
+                />
+            )} */}
+
             {/* ===== Table + sidebar ===== */}
-            <div className="game-layout">
+            {/* <div className="game-layout">
  
                 <div className="game-layout__main">
                     <PokerTable
@@ -275,7 +482,7 @@ const GameSimulator = () =>
                         }
                         onBoardCardClick={(index) => {
                             console.log(`Clicked board card ${index}`)
-                            const card = displayHand?.nodes?.[nodeIndex]?.card;
+                            const card = displayHand?.nodes?.[index]?.card;
                             if (card) toggleBoardCard(card);
                         }}
                         onBoardSlotClick={(index) => console.log(`Clicked board slot ${index}`)}
@@ -284,8 +491,8 @@ const GameSimulator = () =>
                     />
                 </div>
  
-                {isShowdown && hand?.showdown && (
-                    <div className="game-layout__sidebar">
+                <div className="game-layout__sidebar">
+                    {isShowdown && hand?.showdown && (
                         <ShowdownSummary
                             showdown={hand.showdown}
                             points={hand.points}
@@ -293,21 +500,29 @@ const GameSimulator = () =>
                             onSelectHand={setSelectedCards}
                             onClose={() => setSelectedCards(EMPTY_SELECTION)}
                         />
-                    </div>
-                )}
+                    )} */}
+            {/* <EquityPanel
+                equity={equity}
+                players={hand?.players}
+                loading={equityLoading}
+                error={equityError}
+                onCalculate={handleCalculateEquity}
+                onClear={clearEquity}
+            /> */}
+                {/* </div> 
+            </div> */}
  
-            </div>
- 
-            {player && (
-                <PlayerActionPanel
-                    player={player}
-                    availableActions={availableActions}
-                    minRaise={hand?.min_raise}
-                    maxRaise={hand?.max_raise}
-                    disabled={isHandOver}
-                    onAction={handlePlayerAction}
-                />
-            )}
+{/*                     
+            // {player && (
+            //     <PlayerActionPanel
+            //         player={player}
+            //         availableActions={availableActions}
+            //         minRaise={hand?.min_raise}
+            //         maxRaise={hand?.max_raise}
+            //         disabled={isHandOver}
+            //         onAction={handlePlayerAction}
+            //     />
+            // )} */}
  
         </div>
     );

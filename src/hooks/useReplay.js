@@ -68,7 +68,40 @@ export function useReplay(hand) {
 // ─────────────────────────────────────────────────────────────────
 
 function buildFrames(hand) {
-    const { actions, hole_cards, board_cards, point_results, payouts, seats, initial_stacks, street_names } = hand;
+    let { actions, board_cards, point_results, payouts, initial_stacks, street_names } = hand;
+
+    // ── Normalize `seats` ─────────────────────────────────────────
+    // Real hands: seats = { "1": "Alice", "2": "Bob" }
+    // Tutorial hands from some backends: seats missing, players array present.
+    let seats = hand.seats;
+    if (!seats || Object.keys(seats).length === 0) {
+        seats = {};
+        const playersArr = Array.isArray(hand.players)
+            ? hand.players
+            : Object.values(hand.players || {});
+        for (const p of playersArr) {
+            if (p.seat != null) seats[String(p.seat)] = p.name ?? `Player ${p.seat}`;
+        }
+    }
+
+    // ── Normalize `hole_cards` ────────────────────────────────────
+    // Real hands: hole_cards = [{ player_seat, cards }]
+    // Tutorial hands: may be missing; derive from players[].hole_cards.
+    let hole_cards = hand.hole_cards;
+    if (!hole_cards || hole_cards.length === 0) {
+        const playersArr = Array.isArray(hand.players)
+            ? hand.players
+            : Object.values(hand.players || {});
+        hole_cards = playersArr
+            .filter(p => p.hole_cards?.length)
+            .map(p => ({ player_seat: p.seat, cards: p.hole_cards }));
+    }
+    hole_cards = hole_cards ?? [];
+
+    // ── Normalize `actions` / `payouts` / `board_cards` ──────────
+    actions    = actions    ?? [];
+    board_cards = board_cards ?? [];
+    payouts    = payouts    ?? [];
 
     // Build seat → cards lookup
     const holeCardsBySeat = {};

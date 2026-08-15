@@ -214,3 +214,38 @@
     font-size: 10px;
     color: #3d4a60;
 }
+
+.hand-browser__filters {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+}
+.hand-browser__filters .hand-browser__filter {
+    flex: 1;
+}
+.hb-create-btn {
+    background: #f59e0b;
+    color: #060709;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.hand-row__badge {
+    font-size: 10px;
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+    border-radius: 3px;
+    padding: 1px 4px;
+}
+.hand-row__delete {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-family: "Courier New", monospace;
+}

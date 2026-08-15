@@ -1,6 +1,6 @@
 /* Base card styling - uses transform scale for sizing */
 .card {
-  width: 40px;              /* Half of original 50px */
+  width: 50px;              /* Half of original 50px */
   aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 0.2rem;
@@ -24,7 +24,7 @@
 
 /* Empty card slot styling */
 .cardEmpty {
-  width: 25px;
+  width: 50px;
   aspect-ratio: 2 / 3;
   display: block;
   border-radius: 0.2rem;
