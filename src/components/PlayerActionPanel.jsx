@@ -77,20 +77,37 @@ const PlayerActionPanel = ({
             </button>
 
             <div className="bet-section">
-                <input
-                    type="number"
-                    min={minRaise}
-                    max={maxRaise}
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    placeholder={minRaise != null ? `${minRaise}-${maxRaise ?? '∞'}` : "Amount"}
-                    // Greyed out alongside the Bet/Raise button itself
-                    // whenever betting isn't a legal action right now —
-                    // previously this stayed editable even when the
-                    // submit button was disabled, which looked like a
-                    // live control for an illegal action.
-                    disabled={betDisabled}
-                />
+                {/* Typed amount input + its own Bet/Raise submit button
+                    only make sense when there's a real RANGE of legal
+                    sizes to choose between. When minRaise === maxRaise
+                    (push-fold's full-stack shove, river's single
+                    pot-sized bet) there is exactly one legal size, so:
+                      (a) this input added nothing but confusion —
+                          worse, clicking the submit button below with
+                          it left empty silently did nothing at all
+                          (parseFloat("") is NaN, and handleBet bailed
+                          out before ever calling onAction), which
+                          looked like the whole panel was stuck/broken.
+                      (b) the submit button's own label logic (player
+                          already has a nonzero current_bet from a
+                          posted blind, e.g. push-fold's SB) rendered
+                          "Raise" for what is actually an all-in push,
+                          not a real raise.
+                    The quick-amount button below already submits
+                    immediately with the correct (only) size and the
+                    correct "All-In"/"Pot" label, so it's the only
+                    control shown in this case. */}
+                {!singleLegalSize && (
+                    <input
+                        type="number"
+                        min={minRaise}
+                        max={maxRaise}
+                        value={betAmount}
+                        onChange={(e) => setBetAmount(e.target.value)}
+                        placeholder={minRaise != null ? `${minRaise}-${maxRaise ?? '∞'}` : "Amount"}
+                        disabled={betDisabled}
+                    />
+                )}
                 {maxRaise != null && (
                 <button
                     className={`bet-quick ${betDisabled ? "disabled" : ""}`}
@@ -100,13 +117,14 @@ const PlayerActionPanel = ({
                     {singleLegalSize ? "All-In" : "Pot"}
                 </button>                
                 )}
-                <button className={`bet ${ !canBet ? "disabled" : ""}`}
-                disabled={betDisabled}
-                onClick={handleBet}
-                >
-                    {player?.bet > 0 ? "Raise" : "Bet"}
-                {/* {player?.contributionCurrentStreet > 0 ? "Raise" : "Bet"} */}
-                </button>
+                {!singleLegalSize && (
+                    <button className={`bet ${ !canBet ? "disabled" : ""}`}
+                    disabled={betDisabled}
+                    onClick={handleBet}
+                    >
+                        {player?.bet > 0 ? "Raise" : "Bet"}
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -28,6 +28,22 @@ export const startTrainerScenario = async (scenarioKey) => {
     return res.json();
 };
 
+export const fetchTrainerCheckpoints = async (scenarioKey) => {
+    const res = await fetch(`${API_BASE_URL}/trainer/scenarios/${encodeURIComponent(scenarioKey)}/checkpoints`);
+    if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch trainer checkpoints"));
+    return res.json();
+};
+
+export const selectTrainerCheckpoint = async (scenarioKey, filename) => {
+    const res = await fetch(`${API_BASE_URL}/trainer/scenarios/${encodeURIComponent(scenarioKey)}/checkpoint`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: filename || null }),
+    });
+    if (!res.ok) throw new Error(await _errorMessage(res, "Failed to select trainer checkpoint"));
+    return res.json();
+};
+
 export const fetchTrainerState = async () => {
     const res = await fetch(`${API_BASE_URL}/trainer/state`);
     if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch trainer state"));
@@ -55,6 +71,12 @@ export const resetTrainerScoreboard = async () => {
 export const fetchTrainerGrid = async () => {
     const res = await fetch(`${API_BASE_URL}/trainer/grid`);
     if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch trainer hand grid"));
+    return res.json();
+};
+
+export const fetchTrainerHistoryGrid = async (entryId) => {
+    const res = await fetch(`${API_BASE_URL}/trainer/history/${entryId}/grid`);
+    if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch history hand grid"));
     return res.json();
 };
 

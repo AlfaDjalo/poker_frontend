@@ -13,6 +13,8 @@ import {
     fetchTrainerHistory,
     fetchTrainerDebug,
     fetchTrainerLiveDebug,
+    fetchTrainerCheckpoints,
+    selectTrainerCheckpoint,
 } from '../api/trainerApi';
 
 function normalizePlayers(playersArray) {
@@ -88,6 +90,15 @@ const Trainer = () => {
     const [showHandGrid, setShowHandGrid] = useState(false);
     const [scenarioVersion, setScenarioVersion] = useState(0);
 
+    // Checkpoint picker — which trained model to play against for the
+    // selected scenario type. Populated from GET
+    // /trainer/scenarios/{key}/checkpoints whenever selectedScenario
+    // changes; checkpointOptions.checkpoints is [] for scenarios with
+    // no checkpoint_dir configured, in which case the dropdown is
+    // simply not shown.
+    const [checkpointOptions, setCheckpointOptions] = useState(null);
+    const [checkpointError, setCheckpointError] = useState(null);
+
     // Non-null while viewing a past scoreboard entry read-only.
     const [viewingHistoryId, setViewingHistoryId] = useState(null);
 
@@ -102,6 +113,15 @@ const Trainer = () => {
     const requestIdRef = useRef(0);
     const autoAdvanceTimerRef = useRef(null);
 
+    // Whether the currently-selected scenario deals exactly 2 hole
+    // cards — the 169-combo canonical hand grid only makes sense for
+    // that case (Omaha's 4 hole cards have no equivalent "canonical
+    // hand" concept). Backed by list_scenarios()' hole_cards field
+    // (trainer_service.py), and mirrored server-side as a hard 400 —
+    // this is just the UI-level gate so the button isn't even offered.
+    const selectedScenarioMeta = scenarios.find((s) => s.key === selectedScenario);
+    const supportsHandGrid = selectedScenarioMeta?.hole_cards === 2;
+
     useEffect(() => {
         fetchTrainerScenarios()
             .then((list) => {
@@ -112,22 +132,43 @@ const Trainer = () => {
     }, []);
 
     useEffect(() => {
-        resetTrainerScoreboard()
-            .then((board) => setScoreboard(board))
-            .catch((err) => setError(err.message));
-    }, []);
-
-    useEffect(() => {
         return () => {
             if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
         };
     }, []);
+
+    useEffect(() => {
+        if (!supportsHandGrid) setShowHandGrid(false);
+    }, [supportsHandGrid]);
 
     const applyStatePayload = (payload, { fromHistory = false } = {}) => {
         setScenario(formatScenarioState(payload, fromHistory));
         setScoreboard(payload.scoreboard || null);
         setLastDecision(payload.last_decision || null);
         setScenarioVersion((v) => v + 1);
+
+        // Centralized auto-advance: ANY payload that reports hand_over
+        // schedules the next scenario, regardless of which call site
+        // produced it (a submitted hero action, OR a brand-new
+        // scenario that resolved before the hero ever got to act —
+        // e.g. push-fold's villain SB folding immediately). Previously
+        // only handleAction's response checked hand_over, so a hand
+        // that completed during new_scenario() itself (via the
+        // pre-hero villain auto-turn) showed "Hand complete — next
+        // scenario starting…" with nothing actually scheduled to make
+        // that true. Centralizing here means no future call site can
+        // forget this check. Skipped for history replays — reviewing
+        // a past hand should never trigger a live auto-advance.
+        if (autoAdvanceTimerRef.current) {
+            clearTimeout(autoAdvanceTimerRef.current);
+            autoAdvanceTimerRef.current = null;
+        }
+        if (!fromHistory && payload.hand_over) {
+            const myRequestId = requestIdRef.current;
+            autoAdvanceTimerRef.current = setTimeout(() => {
+                if (myRequestId === requestIdRef.current) handleNewScenario();
+            }, AUTO_ADVANCE_DELAY_MS);
+        }
     };
 
     const handleNewScenario = useCallback(async () => {
@@ -153,9 +194,53 @@ const Trainer = () => {
     }, [selectedScenario]);
 
     useEffect(() => {
-        if (selectedScenario) handleNewScenario();
+        if (!selectedScenario) return;
+        // Scenario TYPE changed (including the initial mount) — reset
+        // the scoreboard and clear any history list/review state so
+        // stats and past-hand entries from a different scenario type
+        // (different action vocabulary, different hole-card count,
+        // etc.) never linger around after switching. A "New Scenario"
+        // click on the SAME type does NOT go through this effect (it
+        // calls handleNewScenario() directly instead — see that
+        // button's onClick), so the scoreboard is preserved across
+        // hands of the same scenario, only cleared on an actual type
+        // switch.
+        resetTrainerScoreboard()
+            .then((board) => setScoreboard(board))
+            .catch((err) => setError(err.message));
+        setViewingHistoryId(null);
+        handleNewScenario();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedScenario]);
+
+    useEffect(() => {
+        if (!selectedScenario) {
+            setCheckpointOptions(null);
+            return;
+        }
+        setCheckpointError(null);
+        fetchTrainerCheckpoints(selectedScenario)
+            .then((opts) => setCheckpointOptions(opts))
+            .catch((err) => {
+                setCheckpointOptions(null);
+                setCheckpointError(err.message);
+            });
+    }, [selectedScenario]);
+
+    const handleCheckpointChange = useCallback(async (filename) => {
+        if (!selectedScenario) return;
+        setCheckpointError(null);
+        try {
+            const opts = await selectTrainerCheckpoint(selectedScenario, filename);
+            setCheckpointOptions(opts);
+            // Reload the current model choice into a fresh scenario
+            // immediately rather than leaving the old checkpoint's
+            // agent running until the next natural "New Scenario".
+            handleNewScenario();
+        } catch (err) {
+            setCheckpointError(err.message);
+        }
+    }, [selectedScenario, handleNewScenario]);
 
     const handleAction = async (actionType) => {
         if (viewingHistoryId !== null) return; // read-only view — no decisions
@@ -166,12 +251,6 @@ const Trainer = () => {
             const payload = await sendTrainerAction(actionType);
             if (myRequestId !== requestIdRef.current) return;
             applyStatePayload(payload);
-
-            if (payload.hand_over) {
-                autoAdvanceTimerRef.current = setTimeout(() => {
-                    if (myRequestId === requestIdRef.current) handleNewScenario();
-                }, AUTO_ADVANCE_DELAY_MS);
-            }
         } catch (err) {
             if (myRequestId === requestIdRef.current) setError(err.message);
         } finally {
@@ -201,7 +280,10 @@ const Trainer = () => {
             const payload = await fetchTrainerHistory(entry.id);
             if (myRequestId !== requestIdRef.current) return;
             setViewingHistoryId(entry.id);
-            setShowHandGrid(false); // grid doesn't apply to a past hand
+            // Hand grid now supports history mode (recreated from the
+            // stored decision context via GET /trainer/history/{id}/grid)
+            // — leave whatever grid/table toggle the user already had
+            // set, rather than forcing back to the table view.
             applyStatePayload(payload, { fromHistory: true });
         } catch (err) {
             if (myRequestId === requestIdRef.current) setError(err.message);
@@ -290,6 +372,31 @@ const Trainer = () => {
                         ))}
                     </select>
 
+                    {checkpointOptions && checkpointOptions.checkpoints.length > 0 && (
+                        <>
+                            <label htmlFor="trainer-checkpoint-select" className="game-variant-label">
+                                Model:
+                            </label>
+                            <select
+                                id="trainer-checkpoint-select"
+                                className="game-variant-dropdown"
+                                value={checkpointOptions.selected_checkpoint || ""}
+                                onChange={(e) => handleCheckpointChange(e.target.value || null)}
+                                disabled={loading}
+                                title={checkpointOptions.checkpoint_dir || ""}
+                            >
+                                <option value="">
+                                    Default ({checkpointOptions.default_checkpoint})
+                                </option>
+                                {checkpointOptions.checkpoints.map((fname) => (
+                                    <option key={fname} value={fname}>
+                                        {fname}
+                                    </option>
+                                ))}
+                            </select>
+                        </>
+                    )}
+
                     <button className="game-btn" onClick={handleNewScenario} disabled={loading}>
                         New Scenario
                     </button>
@@ -299,7 +406,8 @@ const Trainer = () => {
                     <button
                         className="game-btn"
                         onClick={() => setShowHandGrid((v) => !v)}
-                        disabled={!scenario || viewingHistoryId !== null}
+                        disabled={!scenario || !supportsHandGrid}
+                        title={!supportsHandGrid ? "Hand grid is only available for 2-hole-card games" : undefined}
                     >
                         {showHandGrid ? "Show Table" : "Show Hand Grid"}
                     </button>
@@ -412,6 +520,12 @@ const Trainer = () => {
                 </div>
             )}
 
+            {checkpointError && (
+                <div className="game-info-bar" style={{ color: "#f87171" }}>
+                    {checkpointError}
+                </div>
+            )}
+
             {viewingHistoryId !== null && (
                 <div className="game-info-bar" style={{ borderColor: "#f59e0b", color: "#f59e0b" }}>
                     Viewing a past hand (read-only).{" "}
@@ -437,7 +551,7 @@ const Trainer = () => {
             {scenario && (
                 <div className="game-layout">
                     <div className="game-layout__main">
-                        {showHandGrid && viewingHistoryId === null ? (
+                        {showHandGrid ? (
                             <>
                                 <div className="game-info-bar" style={{ fontSize: "0.9em" }}>
                                     <strong>Board:</strong>{" "}
@@ -459,8 +573,9 @@ const Trainer = () => {
                                     </span>
                                 </div>
                                 <TrainerHandGrid
-                                    key={scenarioVersion}
+                                    key={`${scenarioVersion}-${viewingHistoryId ?? "live"}`}
                                     onClose={() => setShowHandGrid(false)}
+                                    historyEntryId={viewingHistoryId}
                                 />
                             </>
                         ) : (
@@ -485,6 +600,25 @@ const Trainer = () => {
                                         hideEmptySeats
                                     />
                                 </div>
+
+                                {scenario.action_log && scenario.action_log.length > 0 && (
+                                    <div
+                                        className="game-info-bar"
+                                        style={{ flexDirection: "column", alignItems: "flex-start", fontSize: "0.85em", gap: 2 }}
+                                    >
+                                        {scenario.action_log.map((entry, i) => {
+                                            const who = entry.actor === "hero" ? "You" : "AI";
+                                            const label = ACTION_LABELS[entry.action] || entry.action;
+                                            const amountStr = entry.amount ? ` $${entry.amount}` : "";
+                                            return (
+                                                <div key={i}>
+                                                    <strong>{who}</strong> ({entry.position}): {label}
+                                                    {amountStr}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
                                 {awaitingHero && (
                                     <PlayerActionPanel

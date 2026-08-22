@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchTrainerGrid } from "../api/trainerApi";
+import { fetchTrainerGrid, fetchTrainerHistoryGrid } from "../api/trainerApi";
 import TrainerComboDetail from "./TrainerComboDetail";
 import "../css/TrainerHandGrid.css";
 
@@ -21,30 +21,36 @@ const createHandGrid = () => {
 
 const HAND_GRID = createHandGrid();
 
-// Stable color per action name. Unknown/future action names fall back
-// to the palette below in first-seen order so a new action type never
-// collides with an existing one within a single render.
+// Fixed, semantic color legend — consistent across every action name
+// the Trainer can ever offer, regardless of scenario (push-fold's
+// fold/all_in, river's check/bet/call/fold). Passive actions (check)
+// stay neutral grey; fold is blue; call is green; anything that puts
+// more chips in (bet/raise/all the bet_* sizes/all_in) is warm
+// orange-to-red, with all_in as the most aggressive/red of the group.
 const KNOWN_ACTION_COLORS = {
-    fold: "#dc2626",
-    check: "#64748b",
-    call: "#22c55e",
-    all_in: "#2563eb",
-    bet_25: "#a855f7",
-    bet_50: "#9333ea",
-    bet_75: "#7c3aed",
-    bet_100: "#6d28d9",
-    bet_150: "#5b21b6",
-    raise: "#2563eb",
+    fold: "#2563eb",   // blue
+    check: "#64748b",  // grey
+    call: "#22c55e",   // green
+    bet: "#f97316",    // orange
+    bet_25: "#f97316",
+    bet_50: "#f97316",
+    bet_75: "#f97316",
+    bet_100: "#f97316",
+    bet_150: "#f97316",
+    raise: "#ea580c",  // darker orange
+    all_in: "#dc2626", // red
 };
-const FALLBACK_PALETTE = ["#0891b2", "#ca8a04", "#db2777", "#65a30d", "#ea580c"];
+const FALLBACK_PALETTE = ["#0891b2", "#ca8a04", "#db2777", "#65a30d", "#7c3aed"];
 
 function colorFor(action, index) {
     return KNOWN_ACTION_COLORS[action] || FALLBACK_PALETTE[index % FALLBACK_PALETTE.length];
 }
 
-// One cell's stacked segments, top-to-bottom, in actionOrder.
+// One cell's stacked segments, left-to-right (horizontal), in
+// actionOrder. Each segment's WIDTH is its probability share; the bar
+// always fills the cell's full height.
 const CellBar = ({ probs, actionOrder }) => (
-    <div className="hand-cell__bar">
+    <div className="hand-cell__bar" style={{ display: "flex", flexDirection: "row", width: "100%", height: "100%" }}>
         {actionOrder.map((action, i) => {
             const pct = Math.max(0, (probs?.[action] ?? 0) * 100);
             if (pct <= 0) return null;
@@ -52,7 +58,7 @@ const CellBar = ({ probs, actionOrder }) => (
                 <div
                     key={action}
                     className="hand-cell__segment"
-                    style={{ height: `${pct}%`, backgroundColor: colorFor(action, i) }}
+                    style={{ width: `${pct}%`, height: "100%", backgroundColor: colorFor(action, i) }}
                     title={`${action}: ${pct.toFixed(1)}%`}
                 />
             );
@@ -60,7 +66,19 @@ const CellBar = ({ probs, actionOrder }) => (
     </div>
 );
 
-const TrainerHandGrid = ({ onClose }) => {
+/**
+ * TrainerHandGrid
+ *
+ * Live mode (default): shows the 169-hand grid for the CURRENT
+ * in-progress scenario decision (GET /trainer/grid).
+ *
+ * Review mode (historyEntryId != null): shows the grid recreated for
+ * a PAST, already-graded scoreboard entry (GET
+ * /trainer/history/{id}/grid) — lets you see what the model would
+ * have done with every hand at that exact decision point, same as
+ * live, just for a hand that's already resolved.
+ */
+const TrainerHandGrid = ({ onClose, historyEntryId = null }) => {
     const [gridData, setGridData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -70,12 +88,16 @@ const TrainerHandGrid = ({ onClose }) => {
         let cancelled = false;
         setLoading(true);
         setError(null);
-        fetchTrainerGrid()
+        setSelectedHand(null);
+        const fetcher = historyEntryId != null
+            ? () => fetchTrainerHistoryGrid(historyEntryId)
+            : fetchTrainerGrid;
+        fetcher()
             .then((data) => { if (!cancelled) setGridData(data); })
             .catch((err) => { if (!cancelled) setError(err.message); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, []);
+    }, [historyEntryId]);
 
     const actionOrder = gridData?.action_order || [];
 
@@ -83,7 +105,9 @@ const TrainerHandGrid = ({ onClose }) => {
         <div className="trainer-hand-grid">
             <div className="trainer-hand-grid__header">
                 <div>
-                    <span className="trainer-hand-grid__title">Hand Grid</span>
+                    <span className="trainer-hand-grid__title">
+                        {historyEntryId != null ? "Hand Grid (past decision)" : "Hand Grid"}
+                    </span>
                     {gridData && (
                         <span className="trainer-hand-grid__subtitle">
                             {gridData.position} · {gridData.hero_effective_bb}bb effective
