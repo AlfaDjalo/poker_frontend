@@ -21,6 +21,9 @@ export function useReplay(hand) {
 
     const frames = useMemo(() => {
         if (!hand) return [];
+        if (typeof window !== "undefined" && window.__CAP_DEBUG_STREETS__) {
+            logStreetDiagnostics(hand);
+        }
         return buildFrames(hand);
     }, [hand]);
 
@@ -67,6 +70,57 @@ export function useReplay(hand) {
 // Frame builder
 // ─────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────
+// Diagnostic — compares board_card.street (reveal-order group, from
+// session_logger.log_board) against action.street (deal-group-count
+// derived from graph_engine_callbacks._betting_node_street_map's walk)
+// for a loaded hand. The two are DIFFERENT numbering schemes that only
+// happen to agree for flows where deal/bet steps strictly alternate
+// (every standard/bomb-pot variant today — see buildNodes' own
+// docstring). If they diverge for a given hand (e.g. a non-standard
+// flow like drawmaha's discard/draw step), a board card can end up
+// with a `street` value no action's `street` ever reaches until later
+// than expected — the symptom is a board card "missing" on the street
+// it should have appeared on.
+//
+// Opt-in only (set `window.__CAP_DEBUG_STREETS__ = true` in the
+// console before loading a hand) so this never runs/logs by default.
+// Not a fix — a way to confirm, on a specific repro hand, whether the
+// two numbering schemes actually agree before assuming this is a
+// frontend bug.
+function logStreetDiagnostics(hand) {
+    const actionStreets = (hand.actions || []).map(a => ({
+        action_index: a.action_index,
+        street: a.street,
+        action_type: a.action_type,
+        player_seat: a.player_seat,
+    }));
+    const boardStreets = (hand.board_cards || []).map(bc => ({
+        node: bc.node,
+        street: bc.street,
+        card: bc.card,
+    }));
+    // eslint-disable-next-line no-console
+    console.groupCollapsed(`[CAP] street diagnostics — hand ${hand.hand_id ?? "(unsaved)"}`);
+    // eslint-disable-next-line no-console
+    console.log("actions (action.street):");
+    // eslint-disable-next-line no-console
+    console.table(actionStreets);
+    // eslint-disable-next-line no-console
+    console.log("board_cards (board_card.street, reveal-order):");
+    // eslint-disable-next-line no-console
+    console.table(boardStreets);
+    // eslint-disable-next-line no-console
+    console.log(
+        "Expect: for each board card, some action's street should be >= that card's street "
+        + "at or before the point it's meant to be revealed. If a board card's street is HIGHER "
+        + "than every action's street up to where it should appear, the two numbering schemes "
+        + "have diverged for this hand (backend-side, not fixable here)."
+    );
+    // eslint-disable-next-line no-console
+    console.groupEnd();
+}
+
 function buildFrames(hand) {
     let { actions, board_cards, point_results, payouts, initial_stacks, street_names } = hand;
 
@@ -110,11 +164,20 @@ function buildFrames(hand) {
     }
 
     // ── Node → { card, street } ───────────────────────────────────
-    // board_card.street is 1-based (1=flop, 2=turn, 3=river) as stored by
-    // session_logger._build_node_street_map (enumerates street_nodes starting at 1).
-    // For bomb pots the flop is dealt before any betting; those nodes get street=1.
-    // Action.street is the engine's street_index (also 1 after the flop is dealt).
-    // The comparison "board_card.street <= action.street" is therefore valid.
+    // The Engine has no fixed "street" concept anymore — it's a flow
+    // graph, not a hardcoded preflop/flop/turn/river state machine.
+    // board_card.street is now a sequential REVEAL-GROUP number
+    // (1 = first deal event logged this hand, 2 = second, ...) —
+    // see session_logger.py's SessionLogger.log_board(). action.street
+    // is a parallel "which deal-group had most recently run before
+    // this decision" number, walked fresh off the flow graph per
+    // decision (graph_engine_callbacks.py's _betting_node_street_map /
+    // _street_index_for_node). For any flow where deal events and
+    // betting rounds alternate one-for-one (every shipped variant
+    // today, standard or bomb-pot), the two numbering schemes advance
+    // in lockstep, so "board_card.street <= action.street" still holds
+    // as "was this card revealed at or before this decision" — it's
+    // just no longer literally counting real-world streets.
     const boardCardsByNode = {};
     for (const bc of board_cards) {
         boardCardsByNode[bc.node] = { card: bc.card, street: bc.street };
@@ -212,7 +275,7 @@ function buildFrames(hand) {
             players: buildPlayers(seatNumbers, seats, holeCardsBySeat, { ...betBySeat }, { ...stackBySeat }, false, new Set(), heroSeat),
             // Show board cards already dealt at hand start (e.g. bomb-pot flop).
             // firstActionStreet is the engine street_index of the first action,
-            // which equals the number of board-deal rounds that already happened.            nodes: buildNodes(boardCardsByNode, nodeCount, -1),
+            // which equals the number of board-deal rounds that already happened.
             nodes: buildNodes(boardCardsByNode, nodeCount, firstActionStreet),
             action: null,
             frameActionId: "hand",

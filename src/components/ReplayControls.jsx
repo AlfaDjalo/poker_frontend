@@ -23,6 +23,15 @@ function getStreetName(streetNames, streetIndex) {
  *   onBack / onForward / onJumpStart / onJumpEnd / onScrub
  *   showAllCards  - bool
  *   onToggleCards - () => void
+ *   editingEnabled     - bool, static feature flag from caller
+ *   editorUnavailable  - bool, true once a live /game/edit/* call has
+ *                        hit the backend's 501 (GraphEngine has no
+ *                        snapshot/restore yet — see useHandEditor.js /
+ *                        editApi.js). Hides the button outright instead
+ *                        of letting the user retry a call that will
+ *                        keep failing.
+ *   isEditing
+ *   onEditFromHere
  */
 const ReplayControls = ({
     cursor,
@@ -40,6 +49,7 @@ const ReplayControls = ({
     onToggleCards,
     // Editor props
     editingEnabled = false,
+    editorUnavailable = false,
     isEditing = false,
     onEditFromHere,    
 }) => {
@@ -62,6 +72,7 @@ const ReplayControls = ({
 
     const canEditFromHere =
         editingEnabled &&
+        !editorUnavailable &&
         currentFrame &&
         currentFrame.frameType !== "showdown" &&
         currentFrame.frameType !== "deal";
@@ -170,7 +181,16 @@ const ReplayControls = ({
                     >
                         ✏ Edit from here
                     </button>
-                )}                
+                )}
+                {editingEnabled && editorUnavailable && !isEditing && (
+                    <span
+                        className="replay-toggle"
+                        style={{ opacity: 0.5, cursor: "default" }}
+                        title="Hand Editor is temporarily unavailable — the live engine has no snapshot/restore support yet."
+                    >
+                        ✏ Edit unavailable
+                    </span>
+                )}
             </div>
         </div>
     );

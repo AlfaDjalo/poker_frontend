@@ -14,8 +14,6 @@ function getStreetName(hand, streetIndex) {
 const GameStatusBar = ({ hand }) => {
     if (!hand) return null;
 
-    console.log("Hand: ", hand)
-
     const streetName = getStreetName(hand, hand.street);
 
     const actingSeat = 

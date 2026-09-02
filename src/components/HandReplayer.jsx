@@ -182,6 +182,31 @@ const HandReplayer = ({
     const displayPlayers = buildDisplayPlayers(currentFrame, showAllCards, highlightedCards);
     const displayNodes   = buildDisplayNodes(currentFrame, highlightedCards);
 
+    // ── DEBUG: selection matching (Issue: "board cards for winning
+    // hands are still not being selected"). Same check as
+    // GameSimulator's applySelection — only warns when a requested
+    // highlight has no matching card string anywhere in this frame's
+    // nodes/hands, which points at a format mismatch (e.g. "10h" vs
+    // "Th") between showdown's board_cards_used/hole_cards_used and
+    // the replay frame's own card strings, rather than a selection-
+    // logic bug in this component.
+    if (highlightedCards.length > 0) {
+        const availableNodeCards = (displayNodes || []).filter(Boolean).map(n => n.card);
+        const availableHoleCards = Object.values(displayPlayers || {})
+            .flatMap(p => (p.hand || []).filter(Boolean).map(c => c.card));
+        const unmatched = highlightedCards.filter(
+            c => !availableNodeCards.includes(c) && !availableHoleCards.includes(c)
+        );
+        if (unmatched.length > 0) {
+            console.warn(
+                `[CAP][selection] Highlighted card(s) with no match in this frame's nodes or any player's hand: ` +
+                `${JSON.stringify(unmatched)}. Available node cards: ${JSON.stringify(availableNodeCards)}. ` +
+                `Available hole cards: ${JSON.stringify(availableHoleCards)}. highlightedCards: ` +
+                `${JSON.stringify(highlightedCards)}.`
+            );
+        }
+    }
+
     const editorDisplayPlayers = buildEditorDisplayPlayers(editor.editState, displayPlayers);
     const editorDisplayNodes = buildEditorDisplayNodes(editor.editState, displayNodes);
 
@@ -351,6 +376,7 @@ const HandReplayer = ({
                             showAllCards={showAllCards}
                             onToggleCards={() => setShowAllCards(v => !v)}
                             editingEnabled={EDITOR_SETTINGS.replayer_editing_enabled && !isHypothetical}
+                            editorUnavailable={editor.editorUnavailable}
                             isEditing={editor.isEditing}
                             onEditFromHere={editor.beginEdit}
                         />
@@ -495,23 +521,95 @@ function buildShowdownForSummary(frame, hand) {
     }
 
     const point_results = Object.values(grouped).map(g => {
-        const maxShare = Math.max(...g.results.map(r => r.point_share));
-        const winners = g.results.filter(r => r.point_share === maxShare).map(r => r.player_seat - 1);
-        return {
-            name: g.name,
-            score_type: g.score_type,
-            board_winners: [winners],
-            board_results: [g.results.map(r => ({
+        // A point with more than one board (double board, hopscotch, ...)
+        // gets one PointResultDTO row per player PER BOARD, all sharing
+        // the same point_name/score_type — the wire format carries no
+        // explicit board index. Rows are written one full player-sweep
+        // per board (board 1's players, then board 2's players, ...), so
+        // a player_seat repeating within this group is the signal a new
+        // board has started. Without this split, every board's rows were
+        // merged into a single fake "board 0": maxShare was maxed across
+        // BOTH boards' shares together (picking a wrong/mixed winner),
+        // and board_cards_used for a board-2 winner ended up displayed as
+        // if it were board 1's only board.
+        const boards = [];
+        let current = [];
+        let seenSeats = new Set();
+        for (const r of g.results) {
+            if (seenSeats.has(r.player_seat)) {
+                boards.push(current);
+                current = [];
+                seenSeats = new Set();
+            }
+            seenSeats.add(r.player_seat);
+            current.push(r);
+        }
+        if (current.length) boards.push(current);
+
+        // ── DEBUG: board-split sanity check. The repetition heuristic
+        // above assumes every board in a point is evaluated against the
+        // exact same seats in the exact same order. If that's ever not
+        // true (e.g. a board excludes a folded/ineligible player that
+        // another board includes), boards will come out uneven or a
+        // player's row will land in the wrong board — which would
+        // reintroduce a version of "board cards for winning hands not
+        // selected properly" even after the grouping fix.
+        if (boards.length > 1) {
+            const sizes = boards.map(b => b.length);
+            if (new Set(sizes).size > 1) {
+                console.warn(
+                    `[CAP][showdown] Point "${g.name}" (${g.score_type}) split into ${boards.length} boards of ` +
+                    `UNEVEN size ${JSON.stringify(sizes)} via the player_seat-repetition heuristic. This means ` +
+                    `the boards don't all share the same seat set/order, so this split is likely WRONG for this ` +
+                    `hand — raw rows: ${JSON.stringify(g.results.map(r => ({ seat: r.player_seat, share: r.point_share })))}.`
+                );
+            }
+        }
+
+        const board_winners = [];
+        const board_results = [];
+        const no_qualify = [];
+        const scoop = [];
+
+        for (const boardRows of boards) {
+            const maxShare = Math.max(...boardRows.map(r => r.point_share));
+            const winners = boardRows.filter(r => r.point_share === maxShare).map(r => r.player_seat - 1);
+            const winnerRow = boardRows.find(r => r.point_share === maxShare);
+            if (winnerRow && !(winnerRow.board_cards_used || []).length) {
+                console.warn(
+                    `[CAP][showdown] Winning row for point "${g.name}" (${g.score_type}), player_seat=` +
+                    `${winnerRow.player_seat}, has an EMPTY board_cards_used (${JSON.stringify(winnerRow.board_cards_used)}). ` +
+                    `Nothing will get selected on the table for this winner even though the Best Hand panel ` +
+                    `may still show hole cards. Check whether board_cards_used is actually populated for this ` +
+                    `point_result server-side.`
+                );
+            }
+            board_winners.push(winners);
+            board_results.push(boardRows.map(r => ({
                 player_index: r.player_seat - 1,
                 hand_category: r.hand_category,
                 hand_value: r.hand_value,
-                best_hand_cards: [],
+                // best_hand_cards drives PointDetailPanel's "Best Hand" card
+                // view (hole/board highlight classes) — it was previously
+                // hardcoded to [], which is why nothing ever highlighted
+                // there even once hole_cards_used/board_cards_used started
+                // arriving correctly from the backend.
+                best_hand_cards: [...(r.hole_cards_used || []), ...(r.board_cards_used || [])],
                 hole_cards_used: r.hole_cards_used,
                 board_cards_used: r.board_cards_used,
                 is_winner: r.point_share === maxShare,
-            }))],
-            no_qualify: [false],
-            scoop: [false],
+            })));
+            no_qualify.push(false);
+            scoop.push(false);
+        }
+
+        return {
+            name: g.name,
+            score_type: g.score_type,
+            board_winners,
+            board_results,
+            no_qualify,
+            scoop,
         };
     });
 

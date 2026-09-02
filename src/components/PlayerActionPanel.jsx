@@ -1,22 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import "../css/PlayerActionPanel.css";
 
-const PlayerActionPanel = ({ 
-    player, 
-    availableActions, 
-    minRaise,
-    maxRaise,
+/**
+ * PlayerActionPanel
+ *
+ * GraphEngine DTO migration: bet/raise sizing now lives per-option on
+ * `hand.decision.options` (each option: { action_name, min_amount,
+ * max_amount, label, metadata }) rather than a single flat
+ * minRaise/maxRaise pair on the DTO. This component now takes the full
+ * `options` array (or accepts the legacy minRaise/maxRaise props as a
+ * fallback, for any caller not yet migrated) and resolves the
+ * bet-shaped option itself.
+ *
+ * Props:
+ *   player          - current PlayerDTO
+ *   options         - decision.options array (preferred). Each entry:
+ *                      { action_name, min_amount, max_amount, label, metadata }
+ *   availableActions - optional string[] fallback (derived from options
+ *                      if omitted) — kept for callers still passing the
+ *                      old flat prop.
+ *   toCall          - amount to call (from decision.to_call)
+ *   minRaise/maxRaise - legacy flat fallback, used only if `options`
+ *                      doesn't contain a bet/raise-shaped entry.
+ *   onAction(type, amount?) 
+ *   disabled
+ */
+const PlayerActionPanel = ({
+    player,
+    options = [],
+    availableActions: availableActionsProp,
+    minRaise: minRaiseProp,
+    maxRaise: maxRaiseProp,
     toCall,
-    onAction, 
-    disabled 
+    onAction,
+    disabled
 }) => {
-    
-        const [betAmount, setBetAmount] = useState("");
+
+    const [betAmount, setBetAmount] = useState("");
+
+    const availableActions = availableActionsProp ?? options.map(o => o.action_name);
 
     const can = (action) => availableActions.includes(action);
 
     const canCheck = can("check")
     const canCall = can("call")
+
+    // Resolve the bet/raise-shaped option (if any) for sizing — prefer
+    // "raise" then "bet" since a player only ever sees one of the two
+    // at a given decision.
+    const betOption = options.find(o => o.action_name === "raise")
+        ?? options.find(o => o.action_name === "bet");
+
+    const minRaise = betOption?.min_amount ?? minRaiseProp ?? null;
+    const maxRaise = betOption?.max_amount ?? maxRaiseProp ?? null;
+
     const canBet = can("bet") || can("raise")
 
     const callDisabled = !(canCall || canCheck)
@@ -47,16 +84,10 @@ const PlayerActionPanel = ({
         if (maxRaise != null) amount = Math.min(amount, maxRaise); 
         onAction(player?.bet > 0 ? "raise" : "bet", amount);
     };
-    // const isAvailable = (action) => availableActions.includes(action);
 
     useEffect(() => {
         setBetAmount("");
-    }, [availableActions]);
-    // }, [player?.seat, player?.contributionCurrentStreet]);
-
-    // console.log("Available actions for", player?.name, availableActions);
-    // console.log("player", player);
-    // console.log("Disabled: ", disabled)
+    }, [availableActions.join(",")]);
 
     return (
         <div className="player-action-panel">
@@ -97,7 +128,7 @@ const PlayerActionPanel = ({
                     immediately with the correct (only) size and the
                     correct "All-In"/"Pot" label, so it's the only
                     control shown in this case. */}
-                {!singleLegalSize && (
+                {!singleLegalSize && canBet && (
                     <input
                         type="number"
                         min={minRaise}
@@ -117,7 +148,7 @@ const PlayerActionPanel = ({
                     {singleLegalSize ? "All-In" : "Pot"}
                 </button>                
                 )}
-                {!singleLegalSize && (
+                {!singleLegalSize && canBet && (
                     <button className={`bet ${ !canBet ? "disabled" : ""}`}
                     disabled={betDisabled}
                     onClick={handleBet}

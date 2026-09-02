@@ -4,6 +4,27 @@ const API_BASE_URL = "http://127.0.0.1:8000";
 // Live editing endpoints  (/game/edit/*)
 // ─────────────────────────────────────────────
 
+const EDITOR_UNAVAILABLE_MESSAGE =
+    "Hand Editor is temporarily unavailable — the live engine has no snapshot/restore support yet.";
+
+// Throws a distinguishable error when the backend returns 501
+// (GraphEngine migration: /game/edit/* has no implementation yet).
+// Callers can check `err.isEditorUnavailable` to show a clear message
+// instead of a generic "Failed to X" one.
+async function _handleEditResponse(res, fallbackMessage) {
+    if (res.status === 501) {
+        throw Object.assign(new Error(EDITOR_UNAVAILABLE_MESSAGE), {
+            isEditorUnavailable: true,
+            detail: null,
+        });
+    }
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Object.assign(new Error(fallbackMessage), { detail: err?.detail ?? null });
+    }
+    return res.json();
+}
+
 /**
  * Tell the backend we are entering edit mode.
  * The backend will delete all DB records for the current hand and
@@ -13,8 +34,7 @@ const API_BASE_URL = "http://127.0.0.1:8000";
  */
 export const beginEdit = async () => {
     const res = await fetch(`${API_BASE_URL}/game/edit/begin`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to begin edit");
-    return res.json();
+    return _handleEditResponse(res, "Failed to begin edit");
 };
 
 /**
@@ -27,11 +47,7 @@ export const applyEdit = async (editStateRequest) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editStateRequest),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw Object.assign(new Error("Failed to apply edit"), { detail: err?.detail ?? null });
-    }
-    return res.json();
+    return _handleEditResponse(res, "Failed to apply edit");
 };
 
 /**
@@ -44,11 +60,7 @@ export const loadEdit = async (editStateRequest) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editStateRequest),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw Object.assign(new Error("Failed to load edit"), { detail: err?.detail ?? null });
-    }
-    return res.json();
+    return _handleEditResponse(res, "Failed to load edit");
 };
 
 /**
@@ -56,8 +68,7 @@ export const loadEdit = async (editStateRequest) => {
  */
 export const cancelEdit = async () => {
     const res = await fetch(`${API_BASE_URL}/game/edit/cancel`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to cancel edit");
-    return res.json();
+    return _handleEditResponse(res, "Failed to cancel edit");
 };
 
 // ─────────────────────────────────────────────

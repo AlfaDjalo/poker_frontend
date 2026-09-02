@@ -16,6 +16,13 @@ const EMPTY_SELECTION = { playerCards: {}, boardCards: []};
  */
 const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) => {
     const [activePoint, setActivePoint] = useState(null);
+    // Which board WITHIN the active point is being inspected. A point
+    // with more than one board (double board, hopscotch, triple board,
+    // ...) has one entry per board in board_winners/board_results — this
+    // used to be hardcoded to board 0 below, so clicking any board line
+    // other than the first still only ever showed/selected board 0's
+    // winning cards.
+    const [activeBoard, setActiveBoard] = useState(0);
 
     if (!showdown) return null;
 
@@ -31,33 +38,25 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) =
     const playerName = (idx) => playerList[idx]?.name ?? `P${idx + 1}`;
     const playerSeat = (idx) => playerList[idx]?.seat || idx + 1;
 
-    const handlePointClick = (pointIdx) => {
-        setActivePoint(pointIdx === activePoint ? null : pointIdx);
-
-        if (pointIdx === activePoint) {
-            // toggling off - clear selection
-            onSelectHand?.(EMPTY_SELECTION);
-            return;
-        }
-
-        // Find the first winner's best-hand data from board 0
-        const point = point_results[pointIdx];
-        const boardResults = point?.board_results?.[0];
-        if (!boardResults) return;
-
-        const winner = boardResults.find(r => r.is_winner);
-        if (!winner) return;
-
-        onSelectHand?.({
-            playerCards: {
-                [playerSeat(winner.player_index)]: winner.hole_cards_used || []
-            },
-            boardCards: winner.board_cards_used || []
-        });
+    // Toggling a point row open/closed only controls which
+    // PointDetailPanel is shown. Card selection itself is driven
+    // entirely by PointDetailPanel's own onSelectHand (its mount
+    // effect auto-selects the winner; clicking another player row
+    // re-selects that player's own hole/board cards). Having this
+    // handler ALSO compute and push a selection here created a second,
+    // competing source of truth for the same state — remove it so
+    // there's exactly one path from "click a player" to "highlight
+    // their cards".
+    const handlePointClick = (pointIdx, boardIdx = 0) => {
+        const closing = pointIdx === activePoint && boardIdx === activeBoard;
+        setActivePoint(closing ? null : pointIdx);
+        setActiveBoard(closing ? 0 : boardIdx);
+        if (closing) onSelectHand?.(EMPTY_SELECTION);
     };
 
     const handleClose = () => {
         setActivePoint(null);
+        setActiveBoard(0);
         onSelectHand?.(EMPTY_SELECTION);
         onClose?.();
     };
@@ -103,7 +102,24 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) =
                     </div>
 
                     {point.board_winners.map((winners, bIdx) => (
-                        <div key={bIdx} className="showdown-summary__board">
+                        <div
+                            key={bIdx}
+                            className={`showdown-summary__board ${
+                                activePoint === idx && activeBoard === bIdx ? "active" : ""
+                            }`}
+                            onClick={(e) => {
+                                // Otherwise the outer point-row handler above
+                                // also fires and immediately overwrites this
+                                // board selection with board 0's.
+                                e.stopPropagation();
+                                handlePointClick(idx, bIdx);
+                            }}
+                        >
+                            {point.board_winners.length > 1 && (
+                                <span className="showdown-summary__board-label">
+                                    Board {bIdx + 1}
+                                </span>
+                            )}
                             {point.no_qualify?.[bIdx] ? (
                                 <span className="showdown-summary_no-qualify">
                                     No qualify
@@ -128,7 +144,7 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) =
             {activePoint !== null && (
                 <PointDetailPanel
                     point={point_results[activePoint]}
-                    boardIndex={0}
+                    boardIndex={activeBoard}
                     players={playerList}
                     onSelectHand={(playerIdx, data) => {
                         onSelectHand?.({
@@ -140,6 +156,7 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) =
                     }}
                     onClose={() => {
                         setActivePoint(null);
+                        setActiveBoard(0);
                         onSelectHand?.(EMPTY_SELECTION);
                     }}
                 />

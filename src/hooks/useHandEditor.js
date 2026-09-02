@@ -354,8 +354,8 @@ function editStateFromLiveHand(hand, holeCardCount = null) {
         pot: hand.pot ?? 0,
         dealer_position: hand.dealer_position ?? 0,
         current_player: hand.current_player ?? 0,
-        bet_to_call: hand.to_call ?? 0,
-        min_raise: hand.min_raise ?? 0,
+        bet_to_call: hand.toCall ?? hand.to_call ?? 0,
+        min_raise: hand.minRaise ?? hand.min_raise ?? 0,
         players,
         node_cards,
         discard_pile: hand.discard_pile ?? [],
@@ -479,6 +479,14 @@ export function useHandEditor({
     const [validationErrors, setValidationErrors] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [serverErrors, setServerErrors] = useState([]);
+
+    // True once a "live"/"replayer" edit attempt has hit the backend's
+    // 501 (GraphEngine has no snapshot/restore yet — see editApi.js).
+    // Lets callers (GameSimulator, ReplayControls/HandReplayer) hide the
+    // Edit entry point after the first failure rather than re-offering
+    // a button that will just fail again. Not meaningful for "creation"
+    // mode, which never calls the /game/edit/* endpoints.
+    const [editorUnavailable, setEditorUnavailable] = useState(false);
 
     // ── Variant config (creation_phases, hole_cards, board_layout) ────
     const [variantConfig, setVariantConfig] = useState(null);
@@ -686,7 +694,8 @@ export function useHandEditor({
                 setEditState(initialState);
                 setIsEditing(true);
             } catch (e) {
-                setServerErrors([e.message]);
+                if (e.isEditorUnavailable) setEditorUnavailable(true);
+                setServerErrors([e.isEditorUnavailable ? e.message : (e.detail ?? e.message)]);
             }
         } else if (mode === "replayer") {
             const initialState = editStateFromReplayFrame(frame, handData);
@@ -911,7 +920,8 @@ export function useHandEditor({
             setIsEditing(false);
             onApplied?.(result);
         } catch (e) {
-            setServerErrors([e.detail ?? e.message]);
+            if (e.isEditorUnavailable) setEditorUnavailable(true);
+            setServerErrors([e.isEditorUnavailable ? e.message : (e.detail ?? e.message)]);
         } finally {
             setSubmitting(false);
         }
@@ -928,7 +938,8 @@ export function useHandEditor({
             setIsEditing(false);
             onApplied?.(result); // parent navigates to GameSimulator
         } catch (e) {
-            setServerErrors([e.detail ?? e.message]);
+            if (e.isEditorUnavailable) setEditorUnavailable(true);
+            setServerErrors([e.isEditorUnavailable ? e.message : (e.detail ?? e.message)]);
         } finally {
             setSubmitting(false);
         }
@@ -1051,7 +1062,7 @@ export function useHandEditor({
         if (mode === "live") {
             try {
                 await cancelEdit();
-            } catch (_) { /* ignore */ }
+            } catch (_) { /* ignore — cancel is best-effort either way, including 501 */ }
         }
         setIsEditing(false);
         setEditState(null);
@@ -1066,6 +1077,7 @@ export function useHandEditor({
         validationErrors,
         serverErrors,
         submitting,
+        editorUnavailable,
         beginEdit: beginEditMode,
         moveCard,
         setStack,
