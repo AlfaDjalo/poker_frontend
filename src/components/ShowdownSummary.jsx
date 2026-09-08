@@ -147,6 +147,10 @@ const ShowdownSummary = ({ showdown, points, players, onSelectHand, onClose }) =
                     boardIndex={activeBoard}
                     players={playerList}
                     onSelectHand={(playerIdx, data) => {
+                        console.log("PointDetailPanel data:", data);
+                        console.log("board_cards_used:", data.board_cards_used);
+                        console.log("hole_cards_used:", data.hole_cards_used);
+
                         onSelectHand?.({
                             playerCards: {
                                 [playerSeat(playerIdx)]: data.hole_cards_used

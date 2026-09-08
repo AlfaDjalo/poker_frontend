@@ -78,6 +78,20 @@ function formatHandData(rawHand) {
     };
 }
 
+// Fetches the current authoritative game state without submitting any
+// action — used to resync the frontend after a submit that may have
+// failed AFTER the engine already advanced (e.g. the last player's
+// CARD_PASS: the backend can 500 on-distribution while the engine has
+// already moved past the CARD_PASS node internally). GET /game/state
+// is assumed to mirror the same GameStateDTO shape /game/action
+// returns, so it goes through the same formatHandData normalization.
+export const fetchGameState = async () => {
+    const response = await fetch(`${API_BASE_URL}/game/state`);
+    if (!response.ok) throw new Error('Failed to fetch game state');
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
 export const getVariants = async () => {
     const response = await fetch(`${API_BASE_URL}/game/variants`);
     if (!response.ok) throw new Error('Failed to fetch variants');
@@ -150,6 +164,55 @@ export const sendCardSelectAction = async (selectedCards) => {
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw Object.assign(new Error(err?.detail ?? "Failed to submit card selection"), { detail: err?.detail ?? null });
+    }
+
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
+// ─── Additions to pokerApi.js ───
+
+// BOOLEAN domain (e.g. Grinch's "Christmas next street?" prompt) —
+// per ActionRequest's per-domain field mapping, this domain takes a
+// `bool_value` instead of `type`/`amount` or `selected_cards`.
+export const sendBooleanAction = async (boolValue) => {
+    const response = await fetch(`${API_BASE_URL}/game/action`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ bool_value: boolValue })
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw Object.assign(new Error(err?.detail ?? "Failed to submit decision"), { detail: err?.detail ?? null });
+    }
+
+    const rawHand = await response.json();
+    return formatHandData(rawHand);
+};
+
+// CARD_PASS domain (e.g. Pass the Trash) — wire-identical to
+// CARD_SELECT (`selected_cards`), the target seat is resolved
+// server-side (see CAP_Technical_Document.md §2.9.6), never chosen by
+// the caller. Exported under its own name for call-site clarity even
+// though the body is the same request as sendCardSelectAction; note
+// passed cards will NOT appear in anyone's hand in the response until
+// every eligible player has submitted — that's expected, not a bug,
+// see CardSelectPanel's CARD_PASS usage in GameSimulator.
+export const sendCardPassAction = async (selectedCards) => {
+    const response = await fetch(`${API_BASE_URL}/game/action`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ selected_cards: selectedCards })
+    });
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw Object.assign(new Error(err?.detail ?? "Failed to submit card pass"), { detail: err?.detail ?? null });
     }
 
     const rawHand = await response.json();

@@ -83,6 +83,10 @@ export function useReplay(hand) {
 // than expected — the symptom is a board card "missing" on the street
 // it should have appeared on.
 //
+// This exact mismatch is why buildFrames below no longer compares
+// board_card.street to action.street directly — see the ordinal
+// remap in the "Node → { card, street }" section.
+//
 // Opt-in only (set `window.__CAP_DEBUG_STREETS__ = true` in the
 // console before loading a hand) so this never runs/logs by default.
 // Not a fix — a way to confirm, on a specific repro hand, whether the
@@ -118,11 +122,87 @@ function logStreetDiagnostics(hand) {
         + "have diverged for this hand (backend-side, not fixable here)."
     );
     // eslint-disable-next-line no-console
+    console.log("hole_card_events (raw, first 10):", (hand.hole_card_events || []).slice(0, 10));
+    // eslint-disable-next-line no-console
+    console.log("board_cards (raw, first 10):", (hand.board_cards || []).slice(0, 10));
+
+    // eslint-disable-next-line no-console
     console.groupEnd();
 }
 
+/**
+ * buildHoleCardTimeline
+ *
+ * Reconstructs, for every real board-street 0..maxRealStreet, the set
+ * of hole cards each seat actually held AS OF the end of that street —
+ * from hole_card_events (the real chronological ledger: { sequence,
+ * street, event_type, card, from_seat, to_seat }), NOT the flat
+ * hole_cards snapshot (which only has final cards with no timing).
+ *
+ * event_type values handled:
+ *   "deal" / "receive"                    — card enters to_seat's hand
+ *   "discard" / "remove" / "pass_away"    — card leaves from_seat's hand
+ * Unrecognised event_types are ignored rather than thrown on, since
+ * this ledger is expected to grow new mechanic-specific types over
+ * time and an unhandled one should degrade to "card doesn't move"
+ * rather than crash the replay.
+ *
+ * Events are applied in (street, sequence) order so same-street
+ * mechanics (e.g. a mid-street discard-then-receive) resolve in the
+ * right order within that street's snapshot.
+ *
+ * Falls back to treating every seat's FINAL cards as present from
+ * street 0 onward when hole_card_events is missing/empty — this is
+ * the previous (timing-free) behaviour, kept for hands saved before
+ * this ledger existed (e.g. some older tutorial hands) so they still
+ * render rather than showing empty hands.
+ */
+function buildHoleCardTimeline(seatNumbers, holeCardsBySeat, holeCardEvents, maxRealStreet) {
+    const snapshots = []; // snapshots[street] = { [seat]: string[] }
+
+    if (!holeCardEvents || holeCardEvents.length === 0) {
+        for (let s = 0; s <= maxRealStreet; s++) {
+            const snap = {};
+            for (const seat of seatNumbers) snap[seat] = [...(holeCardsBySeat[seat] || [])];
+            snapshots.push(snap);
+        }
+        return snapshots;
+    }
+
+    const sorted = [...holeCardEvents].sort((a, b) =>
+        (a.street ?? 0) - (b.street ?? 0) || (a.sequence ?? 0) - (b.sequence ?? 0)
+    );
+
+    const running = {};
+    for (const seat of seatNumbers) running[seat] = [];
+
+    let evIdx = 0;
+    for (let s = 0; s <= maxRealStreet; s++) {
+        while (evIdx < sorted.length && (sorted[evIdx].street ?? 0) <= s) {
+            const ev = sorted[evIdx];
+            // Backend sends event_type in UPPERCASE ("DEALT", "DISCARDED", ...).
+            // Normalize once here so this stays robust to casing drift from
+            // either side rather than silently matching nothing (which
+            // previously left every seat's hand empty at every street except
+            // the showdown frame, which bypasses this ledger entirely).
+            const type = (ev.event_type || "").toLowerCase();
+            if (ev.to_seat != null && (type === "dealt" || type === "deal" || type === "receive" || type === "received")) {
+                running[ev.to_seat] = [...(running[ev.to_seat] || []), ev.card];
+            }
+            if (ev.from_seat != null && (type === "discard" || type === "discarded" || type === "remove" || type === "removed" || type === "pass_away")) {
+                running[ev.from_seat] = (running[ev.from_seat] || []).filter(c => c !== ev.card);
+            }
+            evIdx++;
+        }
+        const snap = {};
+        for (const seat of seatNumbers) snap[seat] = [...(running[seat] || [])];
+        snapshots.push(snap);
+    }
+    return snapshots;
+}
+
 function buildFrames(hand) {
-    let { actions, board_cards, point_results, payouts, initial_stacks, street_names } = hand;
+    let { actions, board_cards, point_results, payouts, initial_stacks, street_names, hole_card_events } = hand;
 
     // ── Normalize `seats` ─────────────────────────────────────────
     // Real hands: seats = { "1": "Alice", "2": "Bob" }
@@ -141,6 +221,9 @@ function buildFrames(hand) {
     // ── Normalize `hole_cards` ────────────────────────────────────
     // Real hands: hole_cards = [{ player_seat, cards }]
     // Tutorial hands: may be missing; derive from players[].hole_cards.
+    // This flat snapshot is still used as: (a) the showdown frame's
+    // authoritative final view, and (b) the fallback timeline when
+    // hole_card_events isn't present — see buildHoleCardTimeline.
     let hole_cards = hand.hole_cards;
     if (!hole_cards || hole_cards.length === 0) {
         const playersArr = Array.isArray(hand.players)
@@ -152,35 +235,53 @@ function buildFrames(hand) {
     }
     hole_cards = hole_cards ?? [];
 
-    // ── Normalize `actions` / `payouts` / `board_cards` ──────────
+    // ── Normalize `actions` / `payouts` / `board_cards` / `hole_card_events` ──
     actions    = actions    ?? [];
     board_cards = board_cards ?? [];
     payouts    = payouts    ?? [];
+    hole_card_events = hole_card_events ?? [];
 
-    // Build seat → cards lookup
+    // Build seat → cards lookup (flat, final — see usage notes above)
     const holeCardsBySeat = {};
     for (const hc of hole_cards) {
         holeCardsBySeat[hc.player_seat] = hc.cards;
     }
 
     // ── Node → { card, street } ───────────────────────────────────
-    // The Engine has no fixed "street" concept anymore — it's a flow
-    // graph, not a hardcoded preflop/flop/turn/river state machine.
-    // board_card.street is now a sequential REVEAL-GROUP number
-    // (1 = first deal event logged this hand, 2 = second, ...) —
-    // see session_logger.py's SessionLogger.log_board(). action.street
-    // is a parallel "which deal-group had most recently run before
-    // this decision" number, walked fresh off the flow graph per
-    // decision (graph_engine_callbacks.py's _betting_node_street_map /
-    // _street_index_for_node). For any flow where deal events and
-    // betting rounds alternate one-for-one (every shipped variant
-    // today, standard or bomb-pot), the two numbering schemes advance
-    // in lockstep, so "board_card.street <= action.street" still holds
-    // as "was this card revealed at or before this decision" — it's
-    // just no longer literally counting real-world streets.
+    // board_card.street is a REVEAL-ORDER GROUP number (1, 2, 3... —
+    // incremented once per board-dealing batch), NOT the same
+    // numbering as action.street (the real board-street index, 0-3).
+    // The two only happen to line up when nothing else in the hand
+    // consumes a reveal-order slot — which breaks for extra-card
+    // mechanics (ESG, Catchup ESG, Christmas, Grinch's bonus card,
+    // pass-the-trash all deal/move HOLE cards mid-hand, and previously
+    // shared this same reveal-order counter), pushing later board
+    // batches' raw street number above the real max street ever
+    // reached. Comparing the raw values directly meant those batches
+    // never satisfied `entry.street <= upToStreet` until the terminal
+    // showdown frame (upToStreet=99) — i.e. "the board doesn't render
+    // until showdown".
+    //
+    // Fix: re-map each DISTINCT raw reveal-order value seen among
+    // board_cards, in ascending order, onto its own 1-based ORDINAL
+    // position. That ordinal is what action.street actually counts
+    // through (1st postflop board batch, 2nd, 3rd, ...) regardless of
+    // how many reveal-order slots were consumed elsewhere in the hand.
+    //
+    // Known limitation: this still assumes one board-reveal batch per
+    // real street. A layout that deals MULTIPLE board batches within a
+    // single real street (e.g. hopscotch's two separate flops, both at
+    // real street 1) will still misalign from that point on — that
+    // needs a real per-board-card street field from the backend
+    // (mirroring the hole_card_events.street fix) to resolve fully.
+    // Flagging it here rather than silently mishandling it.
+    const distinctBoardGroups = [...new Set(board_cards.map(bc => bc.street))].sort((a, b) => a - b);
+    const boardGroupToRealStreet = {};
+    distinctBoardGroups.forEach((g, i) => { boardGroupToRealStreet[g] = i + 1; });
+
     const boardCardsByNode = {};
     for (const bc of board_cards) {
-        boardCardsByNode[bc.node] = { card: bc.card, street: bc.street };
+        boardCardsByNode[bc.node] = { card: bc.card, street: boardGroupToRealStreet[bc.street] };
     }
 
     const maxNode = board_cards.length > 0
@@ -191,6 +292,19 @@ function buildFrames(hand) {
     // ── Seat ordering ─────────────────────────────────────────────
     const seatNumbers = Object.keys(seats).map(Number).sort();
     const heroSeat = seatNumbers[0] ?? 1;
+
+    // ── Per-real-street hole card snapshots ─────────────────────────
+    // Real board-street index (0=preflop..3=river typically), derived
+    // the same way action frames already derive `currentStreet` below.
+    // hole_card_events carry the CORRECTED real street per the backend
+    // fix, so this is safe to gate on directly (unlike board_cards).
+    const maxRealStreet = Math.max(
+        0,
+        ...actions.map(a => a.street ?? 0),
+        ...hole_card_events.map(e => e.street ?? 0),
+    );
+    const holeCardSnapshots = buildHoleCardTimeline(seatNumbers, holeCardsBySeat, hole_card_events, maxRealStreet);
+    const holeCardsAtStreet = (street) => holeCardSnapshots[Math.max(0, Math.min(street, maxRealStreet))] ?? holeCardsBySeat;
  
     // ── Reconstruct starting stacks ───────────────────────────────
     // Priority: initial_stacks (backend) > stack_before of first action per player.
@@ -272,7 +386,7 @@ function buildFrames(hand) {
             street_names,
             phase: "DEAL",
             pot: dealFramePot,
-            players: buildPlayers(seatNumbers, seats, holeCardsBySeat, { ...betBySeat }, { ...stackBySeat }, false, new Set(), heroSeat),
+            players: buildPlayers(seatNumbers, seats, holeCardsAtStreet(firstActionStreet), { ...betBySeat }, { ...stackBySeat }, false, new Set(), heroSeat),
             // Show board cards already dealt at hand start (e.g. bomb-pot flop).
             // firstActionStreet is the engine street_index of the first action,
             // which equals the number of board-deal rounds that already happened.
@@ -308,7 +422,7 @@ function buildFrames(hand) {
                 street_names,
                 phase: "DEAL_BOARD",
                 pot: streetPot,
-                players: buildPlayers(seatNumbers, seats, holeCardsBySeat, { ...betBySeat }, { ...stackBySeat }, false, new Set(folded), heroSeat),
+                players: buildPlayers(seatNumbers, seats, holeCardsAtStreet(currentStreet), { ...betBySeat }, { ...stackBySeat }, false, new Set(folded), heroSeat),
                 nodes: buildNodes(boardCardsByNode, nodeCount, currentStreet),
                 action: null,
                 frameActionId: "hand",
@@ -352,7 +466,7 @@ function buildFrames(hand) {
             street_names,
             phase: "BETTING",
             pot: framePot,
-            players: buildPlayers(seatNumbers, seats, holeCardsBySeat, { ...betBySeat }, { ...stackBySeat }, false, new Set(folded), heroSeat),
+            players: buildPlayers(seatNumbers, seats, holeCardsAtStreet(a.street), { ...betBySeat }, { ...stackBySeat }, false, new Set(folded), heroSeat),
             nodes: buildNodes(boardCardsByNode, nodeCount, currentStreet),
             action: a,
             // 
@@ -364,6 +478,10 @@ function buildFrames(hand) {
     }
 
     // ── Showdown frame ────────────────────────────────────────────
+    // Uses the flat, final holeCardsBySeat directly (not the ledger
+    // reconstruction) — this is the authoritative end state regardless
+    // of any timeline-reconstruction edge case, and every card is
+    // shown face-up here anyway (showCards=true).
     frames.push({
         frameType: "showdown",
         street: 4,
@@ -415,12 +533,13 @@ function buildPlayers(seatNumbers, seats, holeCardsBySeat, bets, stacks, showCar
 /**
  * buildNodes — returns the node array visible up to and including upToStreet.
  *
- * board_card.street is 1-based (1=flop, 2=turn, 3=river) from session_logger.
- * upToStreet = engine street_index, which is also 1-based after first board deal:
+ * `boardCardsByNode[i].street` is now the ORDINAL board-reveal position
+ * (1st batch, 2nd batch, ...) — see the remap in buildFrames — which is
+ * directly comparable to `upToStreet`'s convention:
  *   0  → preflop, no board yet (standard games)
- *   1  → flop dealt (standard: after flop; bomb pot: from the start)
- *   2  → turn dealt
- *   3  → river dealt
+ *   1  → 1st board batch dealt (standard: after flop; bomb pot: from the start)
+ *   2  → 2nd board batch dealt (turn, in the common case)
+ *   3  → 3rd board batch dealt (river, in the common case)
  *   99 → show everything (showdown frame)
  *
  * Board cards are NEVER hidden — they are always shown face-up once dealt.

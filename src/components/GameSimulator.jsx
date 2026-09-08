@@ -8,10 +8,11 @@ import WinnerBanner from "./WinnerBanner";
 import HandEditor from "./HandEditor";
 import EquityPanel from './EquityPanel';
 import CardSelectPanel from "./CardSelectPanel";
+import BooleanDecisionPanel from "./BooleanDecisionPanel";
 
 import { useHandEditor } from '../hooks/useHandEditor';
 import { useEquity, buildEquityParamsFromHand } from '../hooks/useEquity';
-import { restart, startNewHand, sendAction, sendCardSelectAction, getVariants } from '../api/pokerApi';
+import { restart, startNewHand, sendAction, sendCardSelectAction, sendBooleanAction, sendCardPassAction, getVariants, fetchGameState } from '../api/pokerApi';
 import "../css/GameSimulator.css";
 
 const FALLBACK_STREET_NAMES = ["Preflop", "Flop", "Turn", "River", "Showdown"];
@@ -85,6 +86,25 @@ const GameSimulator = () =>
     // ---- CARD_SELECT state (e.g. drawmaha's discard/draw step) ----
     const [cardSelectSubmitting, setCardSelectSubmitting] = useState(false);
     const [cardSelectError, setCardSelectError] = useState(null);
+
+    // ---- BOOLEAN state (e.g. Grinch's "Christmas next street?") ----
+    const [booleanSubmitting, setBooleanSubmitting] = useState(false);
+    const [booleanError, setBooleanError] = useState(null);
+
+    // ---- CARD_PASS state (e.g. Pass the Trash) ----
+    // CARD_PASS shares CardSelectPanel's renderer (same wire shape:
+    // min_count/max_count + selected_cards) — see the panel render
+    // below. Only the submit plumbing stays separate since it hits a
+    // different pokerApi function (sendCardPassAction) for call-site
+    // clarity, per that function's own docstring.
+    const [cardPassSubmitting, setCardPassSubmitting] = useState(false);
+    const [cardPassError, setCardPassError] = useState(null);
+    // Tracks the seat that just submitted a pass this round, so we can
+    // show a "waiting on others" state instead of nothing at all once
+    // decision.domain moves on to the next player. Cleared whenever the
+    // decision domain stops being CARD_PASS (round resolved / hand moved
+    // on) — see the effect below.
+    const [cardPassSubmittedSeat, setCardPassSubmittedSeat] = useState(null);
 
     // selectedCards holds the user's card toggle state.
     // Shape: { playerCards: { [seatNum]: string[] }, boardCards: string[] }
@@ -250,6 +270,84 @@ const GameSimulator = () =>
             playerCards: { ...prev.playerCards, [actionPlayer]: [] },
         }));
     };
+
+    // ---- BOOLEAN actions (e.g. Grinch) ----
+    const submitBooleanDecision = useCallback(async (boolValue) => {
+        setBooleanSubmitting(true);
+        setBooleanError(null);
+        try {
+            const updated = await sendBooleanAction(boolValue);
+            setHandNormalized(updated);
+            clearEquity();
+        } catch (e) {
+            // Surfaces the known backend Grinch/last_aggressor gap
+            // (CAP_Technical_Document.md §2.9.11) as a plain error toast,
+            // per the integration note — not special-cased further here.
+            setBooleanError(e.message);
+        } finally {
+            setBooleanSubmitting(false);
+        }
+    }, [clearEquity]);
+
+    const handleBooleanDecision = (boolValue) => {
+        if (actionPlayer == null) return;
+        submitBooleanDecision(boolValue);
+    };
+
+    // ---- CARD_PASS actions (e.g. Pass the Trash) ----
+    const submitCardPass = useCallback(async (seat, cards) => {
+        setCardPassSubmitting(true);
+        setCardPassError(null);
+        try {
+            const updated = await sendCardPassAction(cards);
+            setCardPassSubmittedSeat(seat);
+            setSelectedCards(EMPTY_SELECTION);
+            setHandNormalized(updated);
+            clearEquity();
+        } catch (e) {
+            // A CARD_PASS submit can 500 on the LAST player's pass even
+            // though the engine already distributed the cards and moved
+            // on internally (see the backend's on_cards_distributed
+            // crash) — the HTTP response never arrives, so `hand` here
+            // is left pointing at the stale pre-distribution decision.
+            // Re-fetching authoritative state keeps the UI from getting
+            // stuck showing a CARD_PASS panel for a round that's already
+            // over; if the resync itself fails, fall back to just
+            // surfacing the original error like every other domain does.
+            try {
+                const resynced = await fetchGameState();
+                setSelectedCards(EMPTY_SELECTION);
+                setHandNormalized(resynced);
+                clearEquity();
+                setCardPassError(
+                    `Your pass may not have saved correctly (${e.message}) — state has been refreshed from the server.`
+                );
+            } catch (_resyncErr) {
+                setCardPassError(e.message);
+            }
+        } finally {
+            setCardPassSubmitting(false);
+        }
+    }, [clearEquity]);
+
+    const handleCardPassConfirm = () => {
+        if (actionPlayer == null) return;
+        if (!cardPassOption || !Number.isInteger(cardPassOption.min_count) || !Number.isInteger(cardPassOption.max_count)) {
+            setCardPassError("Selection requirements unavailable — cannot submit yet.");
+            return;
+        }
+        const cards = selectedCards.playerCards[actionPlayer] || [];
+        submitCardPass(actionPlayer, cards);
+    };
+
+    const handleCardPassClear = () => {
+        if (actionPlayer == null) return;
+        setCardPassError(null);
+        setSelectedCards(prev => ({
+            ...prev,
+            playerCards: { ...prev.playerCards, [actionPlayer]: [] },
+        }));
+    };
             
     // 1-based, set while a decision of a domain this component knows how
     // to render is pending. Prefer decision.seat directly — current_player
@@ -257,10 +355,19 @@ const GameSimulator = () =>
     // (graph_engine_adapter.py), so reading decision.seat first is robust
     // to any gap in that mirroring on the backend during the GraphEngine
     // migration. BETTING kept the hand.phase check it already had (its
-    // legacy-shaped mirror of decision.domain); CARD_SELECT reads
-    // decision.domain directly since there's no analogous legacy field.
+    // legacy-shaped mirror of decision.domain); CARD_SELECT/BOOLEAN/
+    // CARD_PASS read decision.domain directly since there's no analogous
+    // legacy field for them.
+    //
+    // For CARD_PASS in particular: this is re-derived on every render
+    // straight from the freshest hand.decision, so a response naming a
+    // DIFFERENT seat than last time (the next player's turn to pick, per
+    // the CARD_PASS sequencing contract) is picked up automatically —
+    // nothing here is "sticky" to whichever seat acted previously.
     const isBettingDecision = hand?.phase === "BETTING";
     const isCardSelectDecision = hand?.decision?.domain === "CARD_SELECT";
+    const isBooleanDecision = hand?.decision?.domain === "BOOLEAN";
+    const isCardPassDecision = hand?.decision?.domain === "CARD_PASS";
 
     const actionPlayer =
         isBettingDecision ? (hand.decision?.seat ?? hand.current_player ?? null)
@@ -272,6 +379,8 @@ const GameSimulator = () =>
         // guard below just renders nothing), making the whole discard/draw step look
         // like it's missing rather than erroring visibly.
         : isCardSelectDecision ? (hand.decision?.seat ?? hand.current_player ?? null)
+        : isBooleanDecision ? (hand.decision?.seat ?? hand.current_player ?? null)
+        : isCardPassDecision ? (hand.decision?.seat ?? hand.current_player ?? null)
         : null;
 
     const player = 
@@ -283,6 +392,29 @@ const GameSimulator = () =>
     // for CARD_SELECT (sibling to action_name/label — see game_api.py's
     // ActionRequest docstring), not nested under metadata.
     const cardSelectOption = isCardSelectDecision ? (hand.decision?.options?.[0] ?? null) : null;
+
+    // BOOLEAN's two options carry {action_name: "yes"/"no", label} —
+    // passed through as-is to BooleanDecisionPanel.
+    const booleanOptions = isBooleanDecision ? (hand.decision?.options ?? []) : [];
+    // Optional human-readable question text, if the backend sends one;
+    // BooleanDecisionPanel falls back to a generic phrase otherwise —
+    // see its own docstring on why this isn't pinned down yet.
+    const booleanPrompt = hand?.decision?.context?.prompt ?? null;
+
+    // CARD_PASS mirrors CARD_SELECT's min_count/max_count shape exactly
+    // (per the wire contract, min_count === max_count — a fixed count,
+    // not a range).
+    const cardPassOption = isCardPassDecision ? (hand.decision?.options?.[0] ?? null) : null;
+
+    // Pass-direction label — e.g. "Choose 3 cards to pass to your left".
+    // Sourced from decision.node_metadata.pass_direction per the
+    // CARD_PASS wire contract. Falls back to "left" phrasing if the
+    // field is ever missing rather than rendering nothing/"undefined" —
+    // this is display-only text, not something validation depends on.
+    const passDirection = isCardPassDecision ? (hand?.decision?.node_metadata?.pass_direction ?? null) : null;
+    const cardPassPrompt = isCardPassDecision && Number.isInteger(cardPassOption?.min_count)
+        ? `Choose ${cardPassOption.min_count} card${cardPassOption.min_count !== 1 ? "s" : ""} to pass to your ${passDirection === "right" ? "right" : "left"}`
+        : null;
 
     // ── DEBUG: decision tracing (Issue: "discard events are not happening") ──
     // Always on (not gated behind a flag) — this only logs when the pending
@@ -327,7 +459,44 @@ const GameSimulator = () =>
                 );
             }
         }
+        if (d.domain === "BOOLEAN") {
+            console.debug(
+                `[CAP][decision] BOOLEAN decision received. actionPlayer=${actionPlayer}, ` +
+                `resolved player=${player ? player.name ?? player.seat : "NONE"}, options=${JSON.stringify(d.options)}`
+            );
+            if (player == null) {
+                console.warn(
+                    `[CAP][decision] BOOLEAN decision arrived but could NOT be resolved to a player ` +
+                    `(decision.seat=${d.seat}, hand.current_player=${hand.current_player}). ` +
+                    `BooleanDecisionPanel will NOT render this turn.`
+                );
+            }
+        }
+        if (d.domain === "CARD_PASS") {
+            console.debug(
+                `[CAP][decision] CARD_PASS decision received. actionPlayer=${actionPlayer}, ` +
+                `resolved player=${player ? player.name ?? player.seat : "NONE"}, ` +
+                `pass_direction=${d.node_metadata?.pass_direction}, options=${JSON.stringify(d.options)}`
+            );
+            if (player == null) {
+                console.warn(
+                    `[CAP][decision] CARD_PASS decision arrived but could NOT be resolved to a player ` +
+                    `(decision.seat=${d.seat}, hand.current_player=${hand.current_player}). ` +
+                    `CardSelectPanel (CARD_PASS mode) will NOT render this turn.`
+                );
+            }
+        }
     }, [hand?.decision, hand?.current_player, hand?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Clear the "I already passed" marker once the engine has moved past
+    // this CARD_PASS round entirely (distribute_passes fired, or the hand
+    // progressed some other way) — otherwise a stale seat number could
+    // incorrectly suppress a FUTURE Pass the Trash round in the same hand.
+    useEffect(() => {
+        if (!isCardPassDecision && cardPassSubmittedSeat != null) {
+            setCardPassSubmittedSeat(null);
+        }
+    }, [isCardPassDecision, cardPassSubmittedSeat]);
     
     const isShowdown =
         hand?.phase === "SHOWDOWN" || hand?.phase === "HAND_COMPLETE";
@@ -443,12 +612,12 @@ const GameSimulator = () =>
             onSeatClick={(seatNum) => console.log("Seat clicked:", seatNum)}
             onPlayerCardClick={(seatNum, cardIndex) => {
                 if (editor.isEditing) return; // drag-and-drop handles it
-                // While a CARD_SELECT decision is pending, only the
-                // acting player's own hand is selectable — you can't
-                // discard/select cards out of someone else's hand.
-                // (Outside of a pending decision, e.g. for equity/
+                // While a CARD_SELECT or CARD_PASS decision is pending,
+                // only the acting player's own hand is selectable — you
+                // can't discard/select/pass cards out of someone else's
+                // hand. (Outside of a pending decision, e.g. for equity/
                 // reference highlighting, any seat remains clickable.)
-                if (isCardSelectDecision && seatNum !== actionPlayer) return;
+                if ((isCardSelectDecision || isCardPassDecision) && seatNum !== actionPlayer) return;
                 const card = displayHand?.players?.[seatNum]?.hand?.[cardIndex]?.card;
                 if (card) togglePlayerCard(seatNum, card);
             }}
@@ -612,6 +781,39 @@ const GameSimulator = () =>
                                 onClear={handleCardSelectClear}
                                 submitting={cardSelectSubmitting}
                                 error={cardSelectError}
+                            />
+                        )}
+
+                        {player && isBooleanDecision && (
+                            <BooleanDecisionPanel
+                                player={player}
+                                prompt={booleanPrompt}
+                                options={booleanOptions}
+                                onDecide={handleBooleanDecision}
+                                submitting={booleanSubmitting}
+                                error={booleanError}
+                            />
+                        )}
+
+                        {/* CARD_PASS reuses CardSelectPanel (identical wire
+                            shape: fixed min_count===max_count + selected_cards)
+                            rather than a separate renderer. promptOverride
+                            carries the pass-direction label; `waiting` shows
+                            the passive "already passed" state once this seat
+                            has submitted but the round hasn't resolved. */}
+                        {player && isCardPassDecision && (
+                            <CardSelectPanel
+                                player={player}
+                                minCount={cardPassOption?.min_count}
+                                maxCount={cardPassOption?.max_count}
+                                selectedCards={selectedCards.playerCards[actionPlayer] || []}
+                                onConfirm={handleCardPassConfirm}
+                                onClear={handleCardPassClear}
+                                submitting={cardPassSubmitting}
+                                error={cardPassError}
+                                promptOverride={cardPassPrompt}
+                                waiting={cardPassSubmittedSeat === actionPlayer}
+                                waitingText="✓ Cards passed — waiting on other players…"
                             />
                         )}
                     </div>

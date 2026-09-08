@@ -1,0 +1,58 @@
+.boolean-decision-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #0d1020;
+    border: 1px solid #1e2535;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+}
+
+.boolean-decision-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.boolean-decision-panel__title {
+    color: #c8d0e0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.boolean-decision-panel__error {
+    color: #f87171;
+    font-size: 12px;
+}
+
+.boolean-decision-panel__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.boolean-decision-panel__btn {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 4px;
+    border: none;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boolean-decision-panel__btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.boolean-decision-panel__btn--yes {
+    background: #22c55e;
+    color: #060709;
+}
+
+.boolean-decision-panel__btn--no {
+    background: #1e2535;
+    color: #c8d0e0;
+}

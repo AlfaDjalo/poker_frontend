@@ -44,6 +44,10 @@ const PointDetailPanel = ({ point, boardIndex = 0, players, onSelectHand, onClos
     });
 
     function selectPlayer(p) {
+        console.log("Selected player:", p);
+        console.log("board_cards_used:", p.board_cards_used);
+        console.log("hole_cards_used:", p.hole_cards_used);
+
         setSelectedPlayer(p);
         onSelectHand?.(p.player_index, {
             hole_cards_used: p.hole_cards_used || [],
@@ -51,16 +55,6 @@ const PointDetailPanel = ({ point, boardIndex = 0, players, onSelectHand, onClos
         });
     }
     
-    // const handleRowClick = (p) => {
-    //     setSelectedPlayer(p);
-    //     if (onSelectHand) {
-    //         onSelectHand(p.player_index, {
-    //             hole_cards_used: p.hole_cards_used || [],
-    //             board_cards_used: p.board_cards_used || []
-    //         });
-    //     }
-    // };
-
     return (
         <div className="point-detail-panel">
 
