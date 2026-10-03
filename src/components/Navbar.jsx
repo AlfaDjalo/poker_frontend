@@ -2,12 +2,20 @@ import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "../css/Navbar.css";
 
+// NOTE: Equity Calculator used to have its own disabled "coming soon"
+// nav entry pointing at a placeholder page. That was left over from
+// before equity moved to being an in-context panel — it's fully live
+// today via the "📊 Equity" toggle in Game Simulator and the Equity
+// panel in Hand Replayer's sidebar (EquityPanel + useEquity.jsx +
+// POST /equity/calculate), it just never had — and doesn't need — a
+// standalone page of its own. Removing the dead nav item (and its
+// PlaceholderPage route in App.jsx) so it stops implying the feature
+// doesn't exist.
 const NAV_ITEMS = [
     { path: "/",          label: "Game Simulator",  icon: "♠" },
     { path: "/replay",    label: "Hand Replayer",    icon: "⏪" },
     { path: "/tutorial",  label: "Tutorial",      icon: "📖" },
     { path: "/trainer",   label: "Trainer",       icon: "🎯" },
-    { path: "/equity",    label: "Equity Calculator", icon: "⚖", disabled: true },
 ];
 
 const Navbar = () => {

@@ -122,7 +122,7 @@
     padding: 10px 12px;
     cursor: pointer;
     border-bottom: 1px solid #111318;
-    transition: background 0.12s;
+    transition: background 0.12s, opacity 0.12s;
 }
 
 .hand-row:hover {
@@ -135,11 +135,20 @@
     padding-left: 9px;
 }
 
+/* Row being deleted — dim it and block interaction until the request
+   resolves (success removes it from the list entirely; failure restores
+   full opacity via the isDeleting flag clearing). */
+.hand-row--deleting {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
 .hand-row__top {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     margin-bottom: 3px;
+    gap: 6px;
 }
 
 .hand-row__variant {
@@ -241,11 +250,32 @@
     border-radius: 3px;
     padding: 1px 4px;
 }
+
+/* Now rendered on every row (real + hypothetical), not just tutorial
+   hands, so this is no longer scoped to hand-row__badge-adjacent
+   markup only — margin-left: auto still pins it to the row's right
+   edge regardless of which other badges/spans precede it. */
 .hand-row__delete {
     margin-left: auto;
+    flex-shrink: 0;
     background: transparent;
     border: none;
     color: #f87171;
     cursor: pointer;
     font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.12s, color 0.12s;
+}
+
+.hand-row__delete:hover:not(:disabled) {
+    background: rgba(248,113,113,0.12);
+    color: #fca5a5;
+}
+
+.hand-row__delete:disabled {
+    opacity: 0.5;
+    cursor: default;
 }

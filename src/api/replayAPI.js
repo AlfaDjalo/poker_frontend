@@ -25,6 +25,34 @@ export const fetchVariants = async () => {
 };
 
 // ─────────────────────────────────────────────
+// Delete
+// ─────────────────────────────────────────────
+
+/**
+ * deleteHand
+ *
+ * DELETE /replay/hands/{handId}. Resolves to { alreadyDeleted: bool }
+ * rather than throwing on 404 — the caller (HandBrowser/HandReplayer)
+ * treats "already gone" the same as "successfully deleted" (both mean
+ * the hand shouldn't be in the local list anymore), it just refreshes
+ * from the server instead of trusting its own optimistic removal.
+ * Any other non-2xx status still throws.
+ */
+export const deleteHand = async (handId) => {
+    const res = await fetch(`${API_BASE_URL}/replay/hands/${handId}`, {
+        method: "DELETE",
+    });
+    if (res.status === 404) {
+        return { alreadyDeleted: true };
+    }
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw Object.assign(new Error("Failed to delete hand"), { detail: err?.detail ?? null });
+    }
+    return { alreadyDeleted: false };
+};
+
+// ─────────────────────────────────────────────
 // Annotations
 // ─────────────────────────────────────────────
 

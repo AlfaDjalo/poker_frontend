@@ -22,30 +22,16 @@ function App() {
             <Route path="/tutorial"           element={<TutorialPage />} />
             <Route path="/tutorial/create"    element={<CreationFlow />} />
             <Route path="/trainer"            element={<Trainer />} />
-            <Route path="/equity"             element={<PlaceholderPage title="Equity Calculator" />} />
-            <Route path="/editor"             element={<PlaceholderPage title="Hand Editor" />} />
+            {/* /equity and /editor removed: equity is a live in-context
+                panel (Game Simulator's "📊 Equity" toggle / Hand
+                Replayer's sidebar EquityPanel), not a standalone page —
+                see Navbar.jsx's note. The Hand Editor equivalent is
+                CreationFlow (/tutorial/create) plus the in-place live/
+                replayer editors, not a separate placeholder route either. */}
           </Routes>
         </div >
     </Router>
   );
 }
-
-const PlaceholderPage = ({ title }) => (
-    <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "calc(100vh - 56px)",
-        gap: 12,
-        fontFamily: "'Courier New', monospace",
-        color: "#3d4a60",
-        background: "#060709",
-    }}>
-        <div style={{ fontSize: 48, opacity: 0.3 }}>🚧</div>
-        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.1em" }}>{title}</div>
-        <div style={{ fontSize: 12, opacity: 0.6 }}>Coming soon</div>
-    </div>
-);
 
 export default App;

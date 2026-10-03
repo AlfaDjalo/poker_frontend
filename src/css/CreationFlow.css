@@ -1,0 +1,283 @@
+/* CreationFlow.css */
+
+.creation-flow {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+    font-family: "Courier New", monospace;
+}
+
+/* ── Pre-session centered panels (game picker / load errors) ── */
+
+.creation-flow__center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 56px);
+    gap: 16px;
+    background: #060709;
+    font-family: "Courier New", monospace;
+}
+
+.creation-flow__title {
+    font-size: 28px;
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.creation-flow__subtitle {
+    font-size: 18px;
+    color: #f59e0b;
+}
+
+.creation-flow__hint {
+    color: #8899aa;
+    font-size: 13px;
+    max-width: 480px;
+    text-align: center;
+}
+
+.creation-flow__field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.creation-flow__field-label {
+    color: #8899aa;
+    font-size: 14px;
+}
+
+.creation-flow__select {
+    background: #0d1020;
+    border: 1px solid #1e2535;
+    color: #c8d0e0;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.creation-flow__start-btn {
+    background: #f59e0b;
+    color: #060709;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 24px;
+    font-family: "Courier New", monospace;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.creation-flow__start-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ── Banner (top bar shown once SETUP/session is active) ── */
+
+.creation-flow__banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: #0a0c12;
+    border-bottom: 1px solid #1e2535;
+    flex-shrink: 0;
+    color: #f59e0b;
+    font-size: 13px;
+}
+
+.creation-flow__banner-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ── Error / warning bars ── */
+
+.creation-flow__error-bar {
+    padding: 6px 16px;
+    background: #1a0f0f;
+    color: #f87171;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.creation-flow__warning-bar {
+    padding: 6px 16px;
+    background: #1a1208;
+    color: #f59e0b;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+/* ── Step trail (graph progress) ── */
+
+.creation-flow__trail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: #0a0c12;
+    border-bottom: 1px solid #1e2535;
+    flex-shrink: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.creation-flow__trail-label {
+    color: #4a5568;
+    font-size: 11px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.creation-flow__trail-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #131722;
+    border: 1px solid #1e2535;
+    color: #6b7a94;
+    flex-shrink: 0;
+}
+
+.creation-flow__trail-chip--current {
+    background: #1a1208;
+    border-color: #f59e0b;
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.creation-flow__trail-arrow {
+    color: #2a3348;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/* ── Main table area ── */
+
+.creation-flow__body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.creation-flow__pot {
+    color: #8899aa;
+    font-size: 13px;
+}
+
+/* ── Footer bar (SETUP: dealer picker + Start) ── */
+
+.creation-flow__footer-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: #0a0c12;
+    border-top: 1px solid #1e2535;
+    flex-shrink: 0;
+}
+
+.creation-flow__dealer-select {
+    margin-left: 8px;
+}
+
+.creation-flow__footer-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ── Footer panel (deal review / choice buttons / complete) ── */
+
+.creation-flow__footer-panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #0a0c12;
+    border-top: 1px solid #1e2535;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.creation-flow__footer-panel-hint {
+    color: #8899aa;
+    font-size: 13px;
+}
+
+.creation-flow__footer-panel-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.creation-flow__override-picker {
+    width: 100%;
+}
+
+.creation-flow__override-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.creation-flow__selected-cards {
+    color: #8899aa;
+    font-size: 13px;
+}
+
+.creation-flow__complete-msg {
+    color: #4ade80;
+    font-size: 14px;
+}
+
+/* ── Unknown-step / stuck-session debug panel ── */
+
+.creation-flow__debug-panel {
+    margin: 16px;
+    padding: 12px;
+    background: #130a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 6px;
+    color: #fca5a5;
+    font-size: 12px;
+}
+
+.creation-flow__debug-panel-title {
+    font-weight: 700;
+    color: #f87171;
+    margin-bottom: 6px;
+}
+
+.creation-flow__debug-panel-action {
+    margin-top: 10px;
+}
+
+.creation-flow__debug-panel pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 300px;
+    overflow: auto;
+    background: #0a0505;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+}
+
+.creation-flow__choice-btn {
+    margin-right: 4px;
+}

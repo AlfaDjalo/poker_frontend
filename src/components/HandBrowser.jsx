@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { fetchAllHands, fetchVariants, deleteTutorialHand } from "../api/handsApi";
+import { deleteHand } from "../api/replayAPI";
 import "../css/HandBrowser.css";
 
 const PAGE_SIZE = 20;
@@ -16,6 +17,11 @@ const SOURCE_OPTIONS = [
  * Replaces the old HandBrowser.jsx + TutorialHandBrowser.jsx split.
  * Lists both real and hypothetical hands from GET /hands, with a
  * source filter (All / Hand History / Tutorial) and a variant filter.
+ *
+ * Every row (real or hypothetical) is deletable from here — real hands
+ * go through DELETE /replay/hands/{id} (replayAPI.deleteHand), tutorial
+ * hands through DELETE /tutorial/hands/{id} (handsApi.deleteTutorialHand,
+ * unchanged). Both paths funnel through handleDelete below.
  *
  * Props:
  *   selectedHandId    - currently loaded hand id (to highlight)
@@ -41,6 +47,10 @@ const HandBrowser = ({
     const [total, setTotal] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    // Per-hand "deleting…" flag so the row can show a busy state and
+    // its trash button can be disabled while the request is in flight,
+    // without blocking clicks on any other row.
+    const [deletingId, setDeletingId] = useState(null);
 
     // Load variant list once
     useEffect(() => {
@@ -95,16 +105,43 @@ const HandBrowser = ({
     const canPrevHand = selectedIdx > 0 || canPrevPage;
     const canNextHand = (selectedIdx >= 0 && selectedIdx < hands.length - 1) || canNextPage;
 
+    // ── Delete (real + hypothetical) ────────────────────────────────
+    // Confirmation happens once here regardless of source. On success
+    // (204) the row is optimistically dropped from local state. On a
+    // 404 from deleteHand (real hands only — already gone server-side)
+    // we don't trust our own optimistic removal; instead we re-fetch
+    // the current page from the server so the list matches reality
+    // (e.g. if other rows shifted due to pagination). If the deleted
+    // hand was the one currently open in the detail/replay view, tell
+    // the parent to clear/redirect via onSelectHand(null, {}).
     const handleDelete = async (e, hand) => {
         e.stopPropagation();
-        if (!hand.is_hypothetical) return; // real hands aren't deletable from this UI
-        if (!window.confirm("Delete this tutorial hand?")) return;
+        const label = hand.is_hypothetical ? "tutorial hand" : "hand";
+        if (!window.confirm(`Delete this ${label}? This cannot be undone.`)) return;
+
+        setDeletingId(hand.hand_id);
+        setError(null);
         try {
-            await deleteTutorialHand(hand.hand_id);
-            if (hand.hand_id === selectedHandId) onSelectHand(null, {});
-            load(offset, variantFilter, sourceFilter);
+            if (hand.is_hypothetical) {
+                await deleteTutorialHand(hand.hand_id);
+                setHands(prev => prev.filter(h => h.hand_id !== hand.hand_id));
+                if (hand.hand_id === selectedHandId) onSelectHand(null, {});
+            } else {
+                const result = await deleteHand(hand.hand_id);
+                if (result.alreadyDeleted) {
+                    // Server disagrees with our local list — resync
+                    // instead of assuming our optimistic removal is safe.
+                    if (hand.hand_id === selectedHandId) onSelectHand(null, {});
+                    await load(offset, variantFilter, sourceFilter);
+                } else {
+                    setHands(prev => prev.filter(h => h.hand_id !== hand.hand_id));
+                    if (hand.hand_id === selectedHandId) onSelectHand(null, {});
+                }
+            }
         } catch (e) {
-            setError("Failed to delete hand.");
+            setError(e.detail ?? e.message ?? "Failed to delete hand.");
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -176,6 +213,7 @@ const HandBrowser = ({
                         key={`${h.is_hypothetical ? "t" : "r"}-${h.hand_id}`}
                         hand={h}
                         isSelected={h.hand_id === selectedHandId}
+                        isDeleting={deletingId === h.hand_id}
                         onClick={() => onSelectHand(h.hand_id, { isHypothetical: !!h.is_hypothetical })}
                         onDelete={(e) => handleDelete(e, h)}
                     />
@@ -210,7 +248,7 @@ const HandBrowser = ({
 // Hand row
 // ─────────────────────────────────────────────
 
-const HandRow = ({ hand, isSelected, onClick, onDelete }) => {
+const HandRow = ({ hand, isSelected, isDeleting, onClick, onDelete }) => {
     const date = (hand.started_at || hand.created_at)
         ? new Date(hand.started_at || hand.created_at).toLocaleString(undefined, {
             month: "short", day: "numeric",
@@ -220,7 +258,7 @@ const HandRow = ({ hand, isSelected, onClick, onDelete }) => {
  
     return (
         <div
-            className={`hand-row ${isSelected ? "hand-row--selected" : ""}`}
+            className={`hand-row ${isSelected ? "hand-row--selected" : ""} ${isDeleting ? "hand-row--deleting" : ""}`}
             onClick={onClick}
         >
             <div className="hand-row__top">
@@ -229,15 +267,14 @@ const HandRow = ({ hand, isSelected, onClick, onDelete }) => {
                     <span className="hand-row__badge" title="Tutorial hand">🧪 Tutorial</span>
                 )}
                 <span className="hand-row__id">#{hand.hand_id}</span>
-                {hand.is_hypothetical && (
-                    <button
-                        className="hand-row__delete"
-                        onClick={onDelete}
-                        title="Delete tutorial hand"
-                    >
-                        ✕
-                    </button>
-                )}
+                <button
+                    className="hand-row__delete"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                    title={hand.is_hypothetical ? "Delete tutorial hand" : "Delete hand"}
+                >
+                    {isDeleting ? "…" : "🗑"}
+                </button>
             </div>
             <div className="hand-row__bottom">
                 <span className="hand-row__date">{date}</span>
