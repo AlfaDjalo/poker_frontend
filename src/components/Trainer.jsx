@@ -242,13 +242,13 @@ const Trainer = () => {
         }
     }, [selectedScenario, handleNewScenario]);
 
-    const handleAction = async (actionType) => {
+    const handleAction = async (actionType, amount = null) => {
         if (viewingHistoryId !== null) return; // read-only view — no decisions
         const myRequestId = ++requestIdRef.current;
         setLoading(true);
         setError(null);
         try {
-            const payload = await sendTrainerAction(actionType);
+            const payload = await sendTrainerAction(actionType, amount);
             if (myRequestId !== requestIdRef.current) return;
             applyStatePayload(payload);
         } catch (err) {
@@ -332,7 +332,12 @@ const Trainer = () => {
         a === "all_in" ? ((heroPlayer?.bet ?? 0) > 0 ? "raise" : "bet") : a
     );
 
-    const handlePanelAction = (panelActionType /*, amount */) => {
+    const handlePanelAction = (panelActionType, amount) => {
+        if (Array.isArray(scenario?.hero_action_options)) {
+            handleAction(panelActionType, amount);
+            return;
+        }
+
         // Amount is intentionally ignored: every bet/raise/all-in this
         // Trainer ever offers has exactly one legal size (push-fold's
         // full-stack shove, or river's single pot-sized bet) —
@@ -624,6 +629,7 @@ const Trainer = () => {
                                     <PlayerActionPanel
                                         player={heroPlayer}
                                         availableActions={panelActions}
+                                        discreteOptions={scenario?.hero_action_options}
                                         // Fixed sizing (see handlePanelAction's comment):
                                         // min == max forces the input to always clamp to
                                         // the one legal amount, regardless of what's typed.

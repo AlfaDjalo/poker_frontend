@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import "../css/PlayerActionPanel.css";
 
 /**
@@ -25,9 +25,10 @@ import "../css/PlayerActionPanel.css";
  *   onAction(type, amount?) 
  *   disabled
  */
-const PlayerActionPanel = ({
+const PlayerActionPanelContent = ({
     player,
     options = [],
+    discreteOptions,
     availableActions: availableActionsProp,
     minRaise: minRaiseProp,
     maxRaise: maxRaiseProp,
@@ -85,9 +86,46 @@ const PlayerActionPanel = ({
         onAction(player?.bet > 0 ? "raise" : "bet", amount);
     };
 
-    useEffect(() => {
-        setBetAmount("");
-    }, [availableActions.join(",")]);
+    if (Array.isArray(discreteOptions)) {
+        const actionLabels = {
+            fold: "Fold",
+            check: "Check",
+            call: "Call",
+            all_in: "All-in",
+        };
+
+        return (
+            <div className="player-action-panel">
+                {discreteOptions.map((option, index) => {
+                    const actionType = option.action_type;
+                    const isSizedBet = ["bet", "raise", "all_in"].includes(actionType)
+                        && option.amount != null;
+                    const optionLabel = (option.label || actionType)
+                        .replace(/^(BET|RAISE)_/i, "")
+                        .replace(/_/g, " ")
+                        .replace(/(\d+(?:\.\d+)?)xPOT/i, "$1x Pot");
+                    let label = actionLabels[actionType]
+                        ?? `${actionType.charAt(0).toUpperCase()}${actionType.slice(1)}`;
+                    if (isSizedBet && actionType !== "all_in") {
+                        label = `${actionType === "raise" ? "Raise" : "Bet"} ${optionLabel} (${option.amount})`;
+                    } else if (isSizedBet) {
+                        label = `${label} (${option.amount})`;
+                    }
+
+                    return (
+                        <button
+                            key={`${actionType}:${option.amount ?? ""}:${index}`}
+                            className={actionType === "fold" ? "fold" : actionType === "call" ? "call" : "bet"}
+                            disabled={disabled}
+                            onClick={() => onAction(actionType, option.amount)}
+                        >
+                            {label}
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    }
 
     return (
         <div className="player-action-panel">
@@ -159,6 +197,16 @@ const PlayerActionPanel = ({
             </div>
         </div>
     );
+};
+
+const PlayerActionPanel = (props) => {
+    const availableActions = props.availableActions
+        ?? (props.options || []).map(option => option.action_name);
+    const resetKey = Array.isArray(props.discreteOptions)
+        ? props.discreteOptions.map(option => `${option.action_type}:${option.amount ?? ""}`).join(",")
+        : availableActions.join(",");
+
+    return <PlayerActionPanelContent key={resetKey} {...props} />;
 };
 
 export default PlayerActionPanel;

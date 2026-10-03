@@ -50,11 +50,11 @@ export const fetchTrainerState = async () => {
     return res.json();
 };
 
-export const sendTrainerAction = async (actionType) => {
+export const sendTrainerAction = async (actionType, amount = null) => {
     const res = await fetch(`${API_BASE_URL}/trainer/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_type: actionType }),
+        body: JSON.stringify({ action_type: actionType, amount }),
     });
     if (!res.ok) throw new Error(await _errorMessage(res, "Failed to send trainer action"));
     return res.json();
