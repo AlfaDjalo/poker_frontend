@@ -24,7 +24,7 @@ const Card = ({
   // Clamp scale to reasonable values
   const scaleFactor = Math.max(0.1, Math.min(3.0, Number(scale) || 1.0));
 
-  // console.log("Card: ", card);
+  const sizeVar = { "--card-scale": scaleFactor };
 
   if (!card) {
     return (
@@ -32,7 +32,8 @@ const Card = ({
         className={`cardEmpty 
           ${showOutline ? "cardEmpty-outline" : ""} 
           ${isActiveTarget ? "card-target" : ""}`}
-        style={{ transform: `scale(${scaleFactor})` }}
+        // style={{ transform: `scale(${scaleFactor})` }}
+        style={sizeVar}
         onClick={onClick}
       />
     );
@@ -48,7 +49,8 @@ const Card = ({
         onClick={isClickable ? onClick : undefined}
         style={{ 
           cursor: isClickable ? 'pointer' : 'default',
-          transform: `scale(${scaleFactor})`
+          // transform: `scale(${scaleFactor})`
+          ...sizeVar
         }}
       />
     );
@@ -71,7 +73,8 @@ const Card = ({
       onClick={isClickable ? onClick : undefined}
       style={{ 
         cursor: isClickable ? 'pointer' : 'default',
-        transform: `scale(${scaleFactor})`
+        // transform: `scale(${scaleFactor})`
+        ...sizeVar
       }}
     />
   );

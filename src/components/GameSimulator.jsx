@@ -13,6 +13,7 @@ import BooleanDecisionPanel from "./BooleanDecisionPanel";
 import { useHandEditor } from '../hooks/useHandEditor';
 import { useEquity, buildEquityParamsFromHand } from '../hooks/useEquity';
 import { restart, startNewHand, sendAction, sendCardSelectAction, sendBooleanAction, sendCardPassAction, getVariants, fetchGameState } from '../api/pokerApi';
+import SideSheet from "./SideSheet";
 import "../css/GameSimulator.css";
 
 const FALLBACK_STREET_NAMES = ["Preflop", "Flop", "Turn", "River", "Showdown"];
@@ -726,10 +727,7 @@ const GameSimulator = () =>
                     </span>
                 </div>
             </div>
- 
-            {showWinner && !editor.isEditing && (
-                <WinnerBanner hand={hand} onClose={() => setShowWinner(false)} />
-            )}
+
  
             {/* ===== Main game layout ===== */}
             {/* ===== Editor overlay (replaces table+sidebar) ===== */}
@@ -756,6 +754,9 @@ const GameSimulator = () =>
                 /* ===== Normal play layout ===== */
                 <div className="game-layout">
                     <div className="game-layout__main">
+                        {showWinner && (
+                            <WinnerBanner hand={hand} onClose={() => setShowWinner(false)} />
+                        )}
                         <div className="table-container">
                             {tableElement}
                         </div>
@@ -818,8 +819,12 @@ const GameSimulator = () =>
                         )}
                     </div>
  
-{hasSidebarContent && (
-                        <div className="game-layout__sidebar">
+                    {hasSidebarContent && (
+                        <SideSheet
+                            className="game-layout__sidebar"
+                            title={isShowdown && hand?.showdown ? "Showdown" : "Equity"}
+                            openWhen={isShowdown && !!hand?.showdown}
+                        >
                             {isShowdown && hand?.showdown && (
                                 <ShowdownSummary
                                     showdown={hand.showdown}
@@ -840,7 +845,7 @@ const GameSimulator = () =>
                                     onClear={clearEquity}
                                 />
                             )}
-                        </div>
++                        </SideSheet>
                     )}
                 </div>
             )}

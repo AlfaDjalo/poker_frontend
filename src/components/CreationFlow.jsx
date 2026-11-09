@@ -3,14 +3,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     DndContext,
     DragOverlay,
-    PointerSensor,
-    useSensor,
-    useSensors,
+    // PointerSensor,
+    // useSensor,
+    // useSensors,
     useDroppable,
     pointerWithin,
     rectIntersection,
 } from "@dnd-kit/core";
 
+import { useDndSensors } from "../hooks/useDndSensors";
 import PokerTable from "./PokerTable";
 import DraggableCard from "./DraggableCard";
 import Card from "./Card";
@@ -412,9 +413,7 @@ const CreationFlow = () => {
         });
     }, [dealInfo]);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
-    );
+    const sensors = useDndSensors();
 
     const collisionDetection = useCallback((args) => {
         const hits = pointerWithin(args);

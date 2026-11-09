@@ -4,7 +4,9 @@
 
 .hand-replayer {
     display: flex;
-    height: calc(100vh - 56px);
+    /* height: calc(100vh - 56px); */
+    flex: 1 1 0;
+    min-height: 0;
     width: 100%;
     max-width: 100%;
     background: #592703;
@@ -126,22 +128,9 @@
  * Seats protrude outside the felt so we need overflow: visible all the way down.
  */
 .hand-replayer__table-wrap .poker-table-container {
-    height: 100% !important;
-    min-height: 0 !important;
-    padding: 52px 14px 14px !important;
-    background-color: transparent !important;
-    box-sizing: border-box;
-    width: 100%;
-    overflow: visible !important;
-}
-
-.hand-replayer__table-wrap .poker-table {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
-    overflow: visible !important;
-    max-width: none !important;
-}
+    height: 100%;
+    background-color: transparent;
+} 
 
 /* ── Empty state ── */
 .hand-replayer__empty {
@@ -195,10 +184,6 @@
     position: relative;
 }
 
-.hand-replayer__sidebar > * + * {
-    margin-top: 8px;
-}
-
 /* ── Payouts block ── */
 .hand-replayer__payouts {
     background: #0d0f14;
@@ -241,27 +226,6 @@
     }
 }
 
-@media (max-width: 800px) {
-    .hand-replayer__browser {
-        display: none;
-    }
-    .hand-replayer__sidebar {
-        width: 190px;
-    }
-}
-
-@media (max-width: 640px) {
-    .hand-replayer {
-        flex-direction: column;
-    }
-    .hand-replayer__sidebar {
-        width: 100%;
-        max-height: 200px;
-        border-left: none;
-        border-top: 1px solid #1a1f2e;
-    }
-}
-
 .hr-edit-in-creator-btn {
     background: transparent;
     border: 1px solid #f59e0b;
@@ -272,4 +236,38 @@
     font-size: 11px;
     cursor: pointer;
     margin-left: auto;
+}
+
+/* Browser sheet fills the old fixed-width column on wide screens */
+.hand-replayer__browser .side-sheet__body { flex: 1; min-height: 0; gap: 0; }
+.hand-replayer__browser .hand-browser { flex: 1 1 0; height: auto; min-height: 0; }
+.hand-replayer__sidebar .side-sheet__body { gap: 8px; }
+
+@media (max-width: 800px) {
+    .hand-replayer { flex-direction: column; }
+
+    .hand-replayer__browser,
+    .hand-replayer__sidebar {
+        width: 100%;
+        padding: 0;
+        border: 0;
+        overflow: visible;
+        flex-shrink: 0;
+        align-self: auto;
+    }
+    .hand-replayer__browser { order: 0; }
+    .hand-replayer__centre  { order: 1; }
+    .hand-replayer__sidebar { order: 2; }
+
+    .hand-replayer__browser.side-sheet--open .side-sheet__body {
+        max-height: none;
+        overflow: visible;
+        padding: 0;
+    }
+    .hand-replayer__browser .hand-browser {
+        flex: none;
+        height: 45dvh;
+        min-width: 0;
+        max-width: none;
+    }
 }

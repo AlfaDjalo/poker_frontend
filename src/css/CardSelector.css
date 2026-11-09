@@ -17,32 +17,13 @@
   gap: 0.25rem;
 }
 
-.poker-card {
-  width: 2.2rem;   /* shrink card size */
-  height: auto;    /* keep correct aspect ratio */
-}
-
 .poker-card-placeholder {
-  width: 50px;                   /* Same base width as Card */
-  aspect-ratio: 2 / 3;           /* same as Card */
+  width: calc(var(--card-w, 50px) * 0.8);
+  aspect-ratio: 1 / 1.4;
   border-radius: 0.25rem;        /* if Card uses this */
   border: 1px solid transparent; /* same space as card border */
+  box-sizing: border-box;
   background-color: transparent;
-  transform: scale(0.8);         /* Same scale as applied to Card */
-  transform-origin: center;      /* Match Card's transform origin */
-}
-
-/* Responsive adjustments to match Card.css exactly */
-@media (max-width: 480px) {
-  .poker-card-placeholder {
-    width: 45px;  /* Same base width as Card on small screens */
-  }
-}
-
-@media (min-width: 1920px) {
-  .poker-card-placeholder {
-    width: 70px;  /* Same base width as Card on large screens */
-  }
 }
 
 .card-selector.hovered {
@@ -54,9 +35,6 @@
 /* When the selector is used as a full-width strip (Hand Editor), lay all
    four suit rows out side-by-side instead of the narrow-sidebar 1-2 col grid. */
 .hand-editor__deck-row .deckGrid {
-  grid_template-columns: 1fr 1fr;
-  /* display: flex;
-  flex-direction: column; */
   gap: 0.5rem;
 }
 

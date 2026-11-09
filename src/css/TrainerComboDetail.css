@@ -1,6 +1,6 @@
 .trainer-combo-detail {
-    flex: 1;
-    min-width: 260px;
+    flex: 1 1 0;
+    min-width: 0;
     max-height: 560px;
     overflow-y: auto;
     background: #101318;
@@ -81,4 +81,8 @@
     flex-wrap: wrap;
     font-size: 10px;
     opacity: 0.8;
+}
+
+@container (max-width: 700px) {
+    .trainer-combo-detail { flex: 0 0 auto; max-height: none; }
 }

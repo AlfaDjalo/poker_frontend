@@ -30,10 +30,7 @@ const CardSelector = ({ onSelectCard, usedCards = [] }) => {
       {suitCards.map((card) => (
         <div key={card}>
           {usedCards.includes(card) ? (
-            <div
-              className="poker-card-placeholder" 
-              style={{ transform: "scale(0.8)" }}
-            />
+            <div className="poker-card-placeholder" />
           ) : (
             <DraggableCard 
               id={card}

@@ -1,69 +1,48 @@
-/* Base card styling - uses transform scale for sizing */
-.card {
-  width: 50px;              /* Half of original 50px */
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
+/* Size comes from --card-w (set on the table by useFitCardWidth).
+   Outside a table (deck pickers, drag overlay) it falls back to 50px.
+   --card-scale is a per-instance multiplier (the Card `scale` prop). */
+.card,
+.cardEmpty {
+  width: calc(var(--card-w, 50px) * var(--card-scale, 1));
+  aspect-ratio: 1 / 1.4;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: block;
   border-radius: 0.2rem;
+}
+
+.card {
+  object-fit: cover;
   border: 1px solid #ccc;
   transition: transform 0.15s ease, box-shadow 0.15s ease, translate 0.15s ease;
   cursor: pointer;
-  display: block;
-  transform-origin: center;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
-.card:hover {
-  translate: 0 -20%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+/* Hover lift only on devices that can actually hover */
+@media (hover: hover) {
+  .card:hover {
+    translate: 0 -20%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
 }
 
+/* Must stay AFTER the hover rule so it wins when both apply */
 .card.selected {
   translate: 0 -30%;
   border-color: #fbbf24;
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25), 0 4px 8px rgba(0,0,0,0,3);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25), 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Empty card slot styling */
 .cardEmpty {
-  width: 50px;
-  aspect-ratio: 2 / 3;
-  display: block;
-  border-radius: 0.2rem;
   border: 1px solid transparent;
   background-color: transparent;
-  transform-origin: center;
 }
 
 .cardEmpty-outline {
   border: 1px dashed #999;
-  border-radius: 0.2rem;
-}
-
-/* Scale from left for overlapping hands */
-.card.scale-left {
-  transform-origin: left center;
-}
-
-.cardEmpty.scale-left {
-  transform-origin: left center;
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .card {
-    width: 22px;
-  }
-  .cardEmpty {
-    width: 22px;
-  }
-}
-
-@media (min-width: 1920px) {
-  .card {
-    width: 32px;
-  }
-  .cardEmpty {
-    width: 32px;
-  }
 }
 
 .card-target {

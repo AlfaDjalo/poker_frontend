@@ -8,6 +8,7 @@ import HandBrowser from "./HandBrowser";
 import AnnotationPanel from "./AnnotationPanel";
 import HandEditor from "./HandEditor";
 import EquityPanel from './EquityPanel';
+import SideSheet from "./SideSheet";
 
 import { fetchHand, fetchAnnotations } from "../api/replayAPI";
 import { fetchTutorialHand } from "../api/tutorialApi";
@@ -283,7 +284,7 @@ const HandReplayer = ({
         <div className="hand-replayer">
 
             {/* ── Left: Hand Browser ── */}
-            <div className="hand-replayer__browser">
+            <SideSheet className="hand-replayer__browser" title="Hands" defaultOpen closeWhen={selectedHandId}>
                 <HandBrowser
                     selectedHandId={selectedHandId}
                     onSelectHand={loadHand}
@@ -292,7 +293,7 @@ const HandReplayer = ({
                     showCreateButton={showCreateButton}
                     onCreateHand={onCreateHand}
                 />
-            </div>
++            </SideSheet>
 
             {/* ── Centre: Table + Controls ── */}
             <div className="hand-replayer__centre">
@@ -386,8 +387,11 @@ const HandReplayer = ({
 
             {/* ── Right: Sidebar ── */}
             {handData && (
-                <div className="hand-replayer__sidebar">
-
+                <SideSheet
+                    className="hand-replayer__sidebar"
+                    title="Showdown · Notes · Equity"
+                    openWhen={isShowdown}
+                >
                     {isShowdown && currentFrame?.pointResults?.length > 0 && (
                         <ShowdownSummary
                             showdown={buildShowdownForSummary(currentFrame, handData)}
@@ -452,7 +456,7 @@ const HandReplayer = ({
                                 ))}
                         </div>
                     )}
-                </div>
++                </SideSheet>
             )}
         </div>
     );

@@ -208,3 +208,8 @@
     outline: 2px dashed #f59e0b55;
     outline-offset: 4px;
 }
+
+.hand-editor__table > .poker-table-container {
+    flex: 1 1 auto;
+    height: auto;
+}

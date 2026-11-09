@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useSession } from "../hooks/useSession";
+import { useAuth } from "../hooks/useAuth";
 import "../css/Navbar.css";
 
 // NOTE: Equity Calculator used to have its own disabled "coming soon"
@@ -11,15 +13,33 @@ import "../css/Navbar.css";
 // standalone page of its own. Removing the dead nav item (and its
 // PlaceholderPage route in App.jsx) so it stops implying the feature
 // doesn't exist.
-const NAV_ITEMS = [
-    { path: "/",          label: "Game Simulator",  icon: "♠" },
-    { path: "/replay",    label: "Hand Replayer",    icon: "⏪" },
-    { path: "/tutorial",  label: "Tutorial",      icon: "📖" },
-    { path: "/trainer",   label: "Trainer",       icon: "🎯" },
-];
+ const NAV_ITEMS = [
+     { path: "/",          label: "Game Simulator",  icon: "♠" },
+     { path: "/lobby",     label: "Tables",          icon: "🎲" },
+     { path: "/replay",    label: "Hand Replayer",    icon: "⏪" },
+     { path: "/tutorial",  label: "Tutorial",      icon: "📖" },
+     { path: "/trainer",   label: "Trainer",       icon: "🎯" },
+     { path: "/settings",  label: "Settings",      icon: "⚙" },
+ ];
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const { player } = useSession();
+    const { isAdmin, isLoggedIn, logout } = useAuth();
+
+    const items = [
+        ...NAV_ITEMS,
+        ...(isAdmin ? [{ path: "/admin", icon: "🛠", label: "Admin" }] : []),
+        {
+            path: "/players",
+            path: player ? "/profile" : "/players",
+            icon: "🙂",
+            label: player
+                ? `${player.name} · ${Number(player.bankroll ?? 0).toLocaleString()}`
+                : "Choose player",
+        },
+    ];
 
     return (
         <nav className="navbar">
@@ -33,7 +53,7 @@ const Navbar = () => {
 
                 {/* ── Desktop nav ── */}
                 <div className="navbar__links">
-                    {NAV_ITEMS.map(({ path, label, icon, disabled }) =>
+                    {items.map(({ path, label, icon, disabled }) =>
                         disabled ? (
                             <span key={path} className="navbar__link navbar__link--disabled" title="Coming soon">
                                 <span className="navbar__link-icon">{icon}</span>
@@ -54,6 +74,11 @@ const Navbar = () => {
                             </NavLink>
                         )
                     )}
+                    {(isLoggedIn || isAdmin) && (
+                        <button className="navbar__link" onClick={logout} title="Log out">
+                            ⎋ Log out
+                        </button>
+                    )}
                 </div>
 
                 {/* ── Mobile hamburger ── */}
@@ -69,7 +94,7 @@ const Navbar = () => {
             {/* ── Mobile drawer ── */}
             {menuOpen && (
                 <div className="navbar__mobile-menu" onClick={() => setMenuOpen(false)}>
-                    {NAV_ITEMS.map(({ path, label, icon, disabled }) =>
+                    {items.map(({ path, label, icon, disabled }) =>
                         disabled ? (
                             <span key={path} className="navbar__mobile-link navbar__mobile-link--disabled">
                                 {icon} {label} <em>(coming soon)</em>
@@ -86,6 +111,9 @@ const Navbar = () => {
                                 {icon} {label}
                             </NavLink>
                         )
+                    )}
+                    {(isLoggedIn || isAdmin) && (
+                        <a className="navbar__mobile-link" onClick={logout}>⎋ Log out</a>
                     )}
                 </div>
             )}

@@ -1,84 +1,65 @@
 import React from "react";
 import "../css/Hand.css";
 import DroppableSlot from "./DroppableSlot";
+import { useTableMetrics } from "../hooks/useFitCardWidth";
 
-/**
- * handLayout — returns the card scale and per-card overlap offset.
- *
- * The card base width is 50px (from Card.css).
- * overlap is the negative margin-left applied from the 2nd card onward,
- * computed so the total hand width fits a seat that is ~160px wide.
- *
- * Target max hand width ≈ 160px:
- *   visible_width = cardW + (count-1) * (cardW + overlap)
- *   where cardW = 50 * scale
- *
- *  count  scale  overlap   approx total
- *  1–4    1.00     0        50–200px  (no overlap needed, ≤4 fits fine)
- *  5      0.90   -14px      ~172px
- *  6      0.85   -16px      ~172px
- *  7      0.80   -18px      ~168px
- *  8      0.75   -20px      ~160px
- *  9      0.70   -22px      ~158px
- *  10     0.65   -22px      ~149px
- *  11+    0.60   -22px      ~138px
- */
-function handLayout(count) {
-  if (count <= 4) return { scale: 1.00, overlap: 0 };
-  if (count === 5) return { scale: 0.90, overlap: -14 };
-  if (count === 6) return { scale: 0.85, overlap: -16 };
-  if (count === 7) return { scale: 0.80, overlap: -18 };
-  if (count === 8) return { scale: 0.75, overlap: -20 };
-  if (count === 9) return { scale: 0.70, overlap: -22 };
-  if (count === 10) return { scale: 0.65, overlap: -22 };
-  return { scale: 0.60, overlap: -22 };
+const MIN_VISIBLE = 0.4; // never hide more than 60% of a card
+
+function layoutHand(count, cardW, availW) {
+  if (count <= 1) return { perRow: Math.max(count, 1), step: cardW };
+  const fitPerRow = Math.max(2, Math.floor(1 + (availW - cardW) / (MIN_VISIBLE * cardW)));
+  const rows = Math.ceil(count / fitPerRow);
+  const perRow = Math.ceil(count / rows);
+  const step = Math.min(cardW, (availW - cardW) / (perRow - 1));
+  return { perRow, step: Math.max(step, 0.2 * cardW) };
 }
 
-const Hand = ({ 
+const Hand = ({
   seatNumber,
-  cards, 
-  scale: scaleProp = 1, 
-  showSlots, 
-  activeSlot, 
-  onCardClick, 
-  onSlotClick, 
-  maxCards
+  cards,
+  scale = 1,
+  showSlots,
+  activeSlot,
+  onCardClick,
+  onSlotClick,
+  maxCards,
 }) => {
-  // Create array with empty slots
-  const slots = Array.from({ length: maxCards }, (_, index) => 
-    cards[index] || null
-  );
+  const { cardW, seatW } = useTableMetrics();
+  const w = cardW * scale;
+  const n = Math.max(maxCards ?? 0, 0);
+  const { perRow, step } = layoutHand(n, w, seatW(seatNumber));
+  const overlap = step - w; // <= 0
 
-  const { scale: autoScale, overlap } = handLayout(maxCards);
-  const finalScale = autoScale * scaleProp;
-  const shouldOverlap = overlap < 0;
+  const slots = Array.from({ length: n }, (_, i) => cards[i] || null);
+  const rows = [];
+  for (let i = 0; i < n; i += perRow) {
+    rows.push(slots.slice(i, i + perRow).map((cardObj, col) => ({ cardObj, index: i + col, col })));
+  }
 
   return (
-    <div className={`hand ${shouldOverlap ? "hand--fan" : ""}`}>
-      {slots.map((cardObj, index) => (
-        <div
-          key={`hand-slot-${seatNumber}-${index}`}        
-          // key={cardObj?.card || `slot-${seatNumber}-${index}`}
-          className="hand__slot-wrapper"
-          style={
-            shouldOverlap && index > 0
-            ? { marginLeft: overlap, zIndex: index }
-            : { zIndex: index }
-          }
-        >
-          <DroppableSlot
-          // <DroppableBoardSlot
-            key={cardObj?.card || `slot-${seatNumber}-${index}`}
-            index={index}
-            variant="player"
-            location={seatNumber}
-            cardObj={cardObj}
-            scale={finalScale}
-            showSlots={showSlots}
-            activeSlot={activeSlot}
-            onCardClick={onCardClick}
-            onSlotClick={onSlotClick}
-          />
+    <div className={`hand ${overlap < 0 ? "hand--fan" : ""}`}>
+      {rows.map((row, r) => (
+        <div key={r} className="hand__row">
+          {row.map(({ cardObj, index, col }) => (
+            <div
+              key={`hand-slot-${seatNumber}-${index}`}
+              className="hand__slot-wrapper"
+              style={{ marginLeft: col > 0 ? overlap : 0, zIndex: col }}
+            >
+              <DroppableSlot
+                key={cardObj?.card || `slot-${seatNumber}-${index}`}
+                index={index}
+                variant="player"
+                location={seatNumber}
+                cardObj={cardObj}
+                scale={scale}
+                showSlots={showSlots}
+                activeSlot={activeSlot}
+                onCardClick={onCardClick}
+                onSlotClick={onSlotClick}
+              />
+            </div>
+          ))}
         </div>
       ))}
     </div>

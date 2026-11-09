@@ -1,4 +1,5 @@
 .trainer-hand-grid {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -79,15 +80,17 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
-    flex-wrap: wrap;
 }
 
 .hand-grid-169 {
     display: grid;
-    grid-template-columns: repeat(13, minmax(28px, 1fr));
-    grid-template-rows: repeat(13, minmax(28px, 1fr));
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+    grid-template-rows: repeat(13, minmax(0, 1fr));
     gap: 2px;
-    width: min(560px, 100%);
+    /* 100dvh minus navbar and ~200px of header/info bars */
+    --grid-max: calc(100dvh - var(--navbar-h, 56px) - 200px);
+    width: min(60cqw, 640px, var(--grid-max));
+    flex: 0 0 auto;
     aspect-ratio: 1 / 1;
 }
 
@@ -121,13 +124,15 @@
 
 .hand-cell__label {
     position: relative;
-    font-size: 9px;
+    font-size: clamp(6px, 1.6cqw, 11px);
     font-weight: 700;
     color: #ffffff;
     text-shadow: 0 0 2px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.85);
     pointer-events: none;
 }
 
-@media (max-width: 480px) {
-    .hand-cell__label { font-size: 7px; }
+/* Narrow container: grid on top, combo detail underneath */
+@container (max-width: 700px) {
+    .trainer-hand-grid__body { flex-direction: column; align-items: stretch; }
+    .hand-grid-169 { width: min(100cqw, var(--grid-max)); align-self: center; }
 }

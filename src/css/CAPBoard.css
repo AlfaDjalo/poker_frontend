@@ -13,25 +13,31 @@
    /* Individual node slot */
    .cap-board__node {
     position: absolute;
+    left: calc(var(--x) * 1% - var(--card-w, 60px) / 2);
+    top: calc(var(--y) * 1% - var(--card-w, 60px) * 0.7);
+    width: var(--card-w, 60px);
+    height: calc(var(--card-w, 60px) * 1.4);
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border-radius: 4px;
    }
 
-   .cap-board__node:hover {
-    transform: translateY(-3px);
-    z-index: 10;
+   @media (hover: hover) {
+    .cap-board__node:hover {
+     transform: translateY(-3px);
+     z-index: 10;
+    }
    }
 
    /* Winning node highlight */
-   .cap-board__node--winner {
+   /* .cap-board__node--winner {
     box-shadow: 0 0 0 3px #facc15, 0 0 12px 4px rgba(250, 204, 21, 0.5);
     border-radius: 5px;
     z-index: 5;
-   }
+   } */
 
    /* Gold dot badge on winning nodes */
-   .cap-board__winner-badge {
+   /* .cap-board__winner-badge {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -41,14 +47,14 @@
     background: #facc15;
     border: 2px solid #fff;
     z-index: 6;
-   }
+   } */
 
    /* Empty node slot */
-   .cap-board__empty-slot {
+   /* .cap-board__empty-slot {
     background: rgba(255, 255, 255, 0.08);
     border: 2px dashed rgba(255, 255, 255, 0.2);
     border-radius: 4px;
-   }
+   } */
 
    /* Point label */
    .cap-board__point-label {

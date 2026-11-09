@@ -10,8 +10,6 @@
  *                  the point label for each point (matched by index to the points array
  *                  from the backend).
  * 
- *  cardSize: relative card size hint (1.0 = standard). Use smaller values for
- *              layouts with many nodes.
  * 
  *  Adding a new game:
  *      1. Add layout_name to the game's .yaml file
@@ -25,7 +23,6 @@ export const BOARD_LAYOUTS = {
   // Nodes 0-4: flop(0,1,2), turn(3), river(4)
   // -------------------------------------------------------
     single_board: {
-        cardSize: 1.0,
         positions: [
             { x: 10, y: 50 },       // node 0 - flop 1
             { x: 26, y: 50 },       // node 1 - flop 2
@@ -44,7 +41,6 @@ export const BOARD_LAYOUTS = {
   // Layout: flop(0,1,2), turn(3), river(4) | flop(5,6,7), turn(8), river(9)
   // -------------------------------------------------------
   double_board: {
-    cardSize: 0.85,
     positions: [
       { x: 10, y: 30 },   // node 0 - board1 flop 1
       { x: 26, y: 30 },   // node 1 - board1 flop 2
@@ -71,7 +67,6 @@ export const BOARD_LAYOUTS = {
   // Layout: flop(0,1,2) | flop(5,6,7), turn(3), river(3)
   // -------------------------------------------------------
   hopscotch: {
-    cardSize: 0.85,
     positions: [
       { x: 10, y: 30 },   // node 0 - board1 flop 1
       { x: 26, y: 30 },   // node 1 - board1 flop 2
@@ -94,7 +89,6 @@ export const BOARD_LAYOUTS = {
   // Board 3: nodes 10-14 (bottom)
   // -------------------------------------------------------
   triple_board: {
-    cardSize: 0.72,
     positions: [
       { x: 10, y: 18 },  // node 0  - board1 flop 1
       { x: 26, y: 18 },  // node 1  - board1 flop 2
@@ -125,7 +119,6 @@ export const BOARD_LAYOUTS = {
   // Players must use non-adjacent cards.
   // -------------------------------------------------------
   social_distancing: {
-    cardSize: 0.72,
     positions: [
       { x:  6, y: 50 },  // node 0
       { x: 20, y: 50 },  // node 1
@@ -143,7 +136,6 @@ export const BOARD_LAYOUTS = {
 
   // Social Distancing 9-card variant
   social_distancing_9: {
-    cardSize: 0.68,
     positions: [
       { x:  4, y: 50 },
       { x: 15, y: 50 },
@@ -164,7 +156,6 @@ export const BOARD_LAYOUTS = {
   // Wheel (8 cards evenly spaced in a circle)
   // -------------------------------------------------------
   wheel: {
-    cardSize: 0.78,
     positions: (() => {
       // Generate 8 evenly-spaced positions around an ellipse
       // centred at (50, 50), rx=38, ry=38
@@ -191,7 +182,6 @@ export const BOARD_LAYOUTS = {
   //   6 7 8
   // -------------------------------------------------------
   grid3x3: {
-    cardSize: 0.78,
     positions: [
       { x: 20, y: 20 },  // node 0
       { x: 50, y: 20 },  // node 1
@@ -222,7 +212,6 @@ export const BOARD_LAYOUTS = {
   //          8   <- second bullseye below
   // -------------------------------------------------------
   double_bullseye: {
-    cardSize: 0.82,
     positions: [
       { x: 20, y: 20 },  // node 0 - vertex TL
       { x: 80, y: 20 },  // node 1 - vertex TR
@@ -253,7 +242,6 @@ export const BOARD_LAYOUTS = {
   //         9    10   <- river
   // -------------------------------------------------------
   bomba: {
-    cardSize: 0.78,
     positions: [
       { x: 20, y: 20 },  // node 0 - col0 top
       { x: 20, y: 50 },  // node 1 - col0 mid
@@ -280,7 +268,6 @@ export const BOARD_LAYOUTS = {
   // River(8,9) bottom row
   // -------------------------------------------------------
   flying_rivers: {
-    cardSize: 0.82,
     positions: [
       { x: 15, y: 20 },  // node 0 - flop1 left
       { x: 32, y: 20 },  // node 1 - flop1 right
@@ -306,7 +293,6 @@ export const BOARD_LAYOUTS = {
   // River(13) bottom
   // -------------------------------------------------------
   funnel: {
-    cardSize: 0.72,
     positions: [
       { x:  8, y: 18 },  // node 0  - flop1 left
       { x: 20, y: 18 },  // node 1  - flop1 mid
@@ -336,7 +322,6 @@ export const BOARD_LAYOUTS = {
   // Board2: turn(5,6), river(7,8)
   // -------------------------------------------------------
   f1: {
-    cardSize: 0.82,
     positions: [
       { x: 50, y: 10 },  // node 0 - common flop
       { x: 22, y: 35 },  // node 1 - board1 turn 1
@@ -362,7 +347,6 @@ export const BOARD_LAYOUTS = {
   // Row 3 (1 card):  node 9
   // -------------------------------------------------------
   countdown: {
-    cardSize: 0.72,
     positions: [
       { x: 14, y: 15 },  // node 0
       { x: 34, y: 15 },  // node 1
@@ -396,6 +380,26 @@ export function getLayout(layoutName) {
 /**
  *  Returns the card size multiplier for a layout.
  */
-export function getCardSize(layoutName) {
-    return getLayout(layoutName).cardSize ?? 1.0;
+// export function getCardSize(layoutName) {
+//     return getLayout(layoutName).cardSize ?? 1.0;
+// }
+
+/**
+ * Largest card width (px) such that no two nodes overlap in a board box of
+ * boxW x boxH px. Edges are not constrained (positions are the author's intent).
+ */
+export function maxCardWidth(positions, boxW, boxH, aspect = 1.4) {
+    let w = Infinity;
+    for (let i = 0; i < positions.length; i++) {
+        for (let j = i + 1; j < positions.length; j++) {
+            const dx = Math.abs(positions[i].x - positions[j].x) * boxW / 100;
+            const dy = Math.abs(positions[i].y - positions[j].y) * boxH / 100 / aspect;
+            w = Math.min(w, Math.max(dx, dy));
+        }
+    }
+    return w;
 }
+
+ /**
+  *  Returns the card size multiplier for a layout.
+  */

@@ -1,0 +1,81 @@
+/* Imported LAST in main.jsx so these override component CSS at equal specificity. */
+
+/* ── Always: primary action buttons are >= 44px ── */
+.player-action-panel { flex-wrap: wrap; }
+
+.player-action-panel button,
+.card-select-panel__btn,
+.boolean-decision-panel__btn,
+.editor-btn,
+.creation-flow__start-btn,
+.profile-page__btn,
+.replay-btn {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.player-action-panel .bet-section input[type="number"] {
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+/* ── Touch devices: everything else tappable ── */
+@media (pointer: coarse) {
+    /* iOS zooms the page when a focused field is under 16px */
+    select,
+    textarea,
+    input[type="text"],
+    input[type="number"] { font-size: 16px; }
+
+    .game-btn,
+    .game-variant-dropdown,
+    .creation-flow__select,
+    .hand-browser__filter,
+    .eq-btn,
+    .eq-scope-select,
+    .hb-nav-btn,
+    .hb-page-btn,
+    .hb-create-btn,
+    .hr-edit-in-creator-btn,
+    .replay-toggle,
+    .annotation-btn,
+    .annotation-nav-btn,
+    .hand-row__delete,
+    .admin-btn,
+    .trainer-hand-grid__close,
+    .point-detail-panel__close,
+    .showdown-summary__close {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .point-detail-panel__row,
+    .eq-table__player-cell,
+    .navbar__mobile-link { min-height: 44px; }
+
+    .navbar__hamburger {
+        width: 44px;
+        height: 44px;
+        padding: 14px 10px;
+        box-sizing: border-box;
+    }
+}
+
+/* ── Header: one scrollable row of controls on small screens ── */
+@media (max-width: 800px) {
+    .game-header { gap: 6px 10px; }
+
+    .game-header__left {
+        flex: 1 1 100%;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .game-header__left::-webkit-scrollbar { display: none; }
+    .game-header__left > * { flex: 0 0 auto; }
+
+    .game-header__right { flex: 1 1 100%; margin-left: 0; }
+    .game-header__right .game-variant-dropdown { flex: 1 1 auto; min-width: 0; }
+}

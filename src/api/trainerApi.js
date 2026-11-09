@@ -50,11 +50,19 @@ export const fetchTrainerState = async () => {
     return res.json();
 };
 
-export const sendTrainerAction = async (actionType, amount = null) => {
+export const sendTrainerAction = async (
+    actionType,
+    amount = null,
+    selectedCards = null
+) => {
     const res = await fetch(`${API_BASE_URL}/trainer/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action_type: actionType, amount }),
+        body: JSON.stringify({
+            action_type: actionType,
+            amount,
+            selected_cards: selectedCards,
+        }),
     });
     if (!res.ok) throw new Error(await _errorMessage(res, "Failed to send trainer action"));
     return res.json();
@@ -95,5 +103,25 @@ export const fetchTrainerLiveDebug = async () => {
 export const fetchTrainerHistory = async (entryId) => {
     const res = await fetch(`${API_BASE_URL}/trainer/history/${entryId}`);
     if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch trainer history entry"));
+    return res.json();
+};
+
+/**
+ * AI's preferred draw for the CURRENT pending CARD_SELECT decision.
+ *
+ * GET /trainer/draw-suggestion ->
+ * {
+ *   discard: string[],        // cards the AI would throw away (best option)
+ *   keep: string[],           // the rest of the hero's hand
+ *   approximate: boolean,     // true if the search fell back to a partial result
+ *   options: [                // top draws; prob is relative among explored draws
+ *     { discard: string[], prob: number }
+ *   ]
+ * }
+ * `discard: []` means "stand pat".
+ */
+export const fetchTrainerDrawSuggestion = async () => {
+    const res = await fetch(`${API_BASE_URL}/trainer/draw-suggestion`);
+    if (!res.ok) throw new Error(await _errorMessage(res, "Failed to fetch AI draw suggestion"));
     return res.json();
 };

@@ -64,7 +64,7 @@ function deriveDecisionFields(rawHand) {
     };
 }
 
-function formatHandData(rawHand) {
+export function formatHandData(rawHand) {
     return {
         ...rawHand,
         ...deriveDecisionFields(rawHand),

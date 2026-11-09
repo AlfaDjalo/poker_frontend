@@ -35,6 +35,9 @@ const DraggableCard = ({ id, source, children, onClick }) => {
     opacity: isDragging ? 0.5 : 1,
     cursor: "grab",
     display: "inline-block",
+    touchAction: "manipulation",
+    WebkitTouchCallout: "none",
+    userSelect: "none",
     zIndex: isDragging ? 1000 : "auto",  // <-- bring to front while dragging
     position: isDragging ? "relative" : "static", // relative so z-index works
   };

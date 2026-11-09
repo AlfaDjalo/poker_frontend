@@ -1,0 +1,85 @@
+.table-view__center {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    color: #8899aa;
+    font-family: 'Courier New', Courier, monospace;
+    overflow-y: auto;
+}
+
+.table-view__badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+
+.table-view__conn { font-size: 11px; color: #f59e0b; }
+
+.table-view__banner { color: #93c5fd; }
+
+.table-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #0a0c0f;
+    flex-shrink: 0;
+}
+.table-controls:empty { display: none; }
+.table-controls__danger { border-color: #7f1d1d; color: #f87171; }
+
+.table-log {
+    max-height: 50dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px;
+    background: #0d0f14;
+    border: 1px solid #1e2535;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #c8d0e0;
+    text-align: left;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3448 transparent;
+}
+.table-log__empty { color: #3d4a60; font-style: italic; }
+.table-log__row { display: flex; gap: 8px; line-height: 1.35; }
+.table-log__time { color: #3d4a60; flex-shrink: 0; }
+.table-log__row--hand_result  { color: #4ade80; }
+.table-log__row--warning,
+.table-log__row--busted       { color: #f87171; }
+.table-log__row--variant_picked,
+.table-log__row--variant_pick { color: #60a5fa; }
+
+.table-view__login-banner {
+    gap: 12px;
+    justify-content: center;
+    color: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.table-log__row--admin { color: #f59e0b; font-style: italic; }
+.table-log__admin-tag {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 0 5px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-style: normal;
+    color: #060709;
+    background: #f59e0b;
+    border-radius: 3px;
+}

@@ -1,10 +1,18 @@
 .hand {
+  /* display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 auto;
+  position: relative;
+  width: fit-content;
+}
+
+.hand__row {
   display: flex;
   align-items: flex-start;
-  justify-content: flex-start;
-  position: relative;
-  /* Let the hand shrink to its content — critical so it doesn't push the seat wide */
-  width: fit-content;
 }
 
 /* Each wrapper reserves exactly the scaled card footprint */
@@ -16,15 +24,12 @@
   transition: transform 0.15s ease;
 }
 
-/* Lift any card on hover */
-.hand__slot-wrapper:hover {
-  /* counter the parent transform-origin so the lift looks natural */
-  z-index: 20 !important;
-  /* translateY in screen space — compensate for the scale */
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
-}
-
-/* In fan mode, add a slight upward nudge on hover */
-.hand--fan .hand__slot-wrapper:hover {
-  transform: translateY(-6px) !important;
+@media (hover: hover) {
+  .hand__slot-wrapper:hover {
+    z-index: 20 !important;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+  }
+  .hand--fan .hand__slot-wrapper:hover {
+    transform: translateY(-6px) !important;
+  }
 }

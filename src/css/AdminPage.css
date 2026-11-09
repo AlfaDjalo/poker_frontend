@@ -1,0 +1,75 @@
+.admin-page {
+    display: flex; flex-direction: column; gap: 12px;
+    width: min(1100px, 100%); margin: 0 auto; padding: 16px; box-sizing: border-box;
+    font-family: 'Courier New', Courier, monospace; color: #c8d0e0; text-align: left;
+    flex: 1 1 0; min-height: 0; overflow-y: auto;
+}
+.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-page__title { font-size: 18px; font-weight: 700; color: #f59e0b; }
+
+.admin-login {
+    display: flex; flex-direction: column; gap: 10px;
+    width: min(340px, 100%); margin: 40px auto; padding: 16px;
+    background: #0d0f14; border: 1px solid #1e2535; border-radius: 8px;
+}
+
+.admin-tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid #1e2535; }
+.admin-tab {
+    min-height: 44px; padding: 0 16px; background: transparent; border: none;
+    border-bottom: 2px solid transparent; color: #6b7a94;
+    font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.admin-tab:hover { color: #e2c97e; }
+.admin-tab--active { color: #f59e0b; border-bottom-color: #f59e0b; }
+
+.admin-section { display: flex; flex-direction: column; gap: 10px; }
+.admin-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.admin-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8899aa; cursor: pointer; }
+
+.admin-input {
+    min-height: 36px; width: 120px; box-sizing: border-box;
+    background: #111318; border: 1px solid #2a3448; border-radius: 4px;
+    color: #c8d0e0; font-family: inherit; font-size: 13px; padding: 0 8px;
+}
+.admin-input:focus { outline: none; border-color: #f59e0b; }
+
+.admin-btn {
+    min-height: 32px; padding: 0 10px;
+    background: #1e2535; color: #c8d0e0; border: 1px solid #2a3448; border-radius: 4px;
+    font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.admin-btn:hover:not(:disabled) { border-color: #f59e0b; color: #f59e0b; }
+.admin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.admin-btn--primary { background: #f59e0b; color: #060709; border-color: #f59e0b; min-height: 44px; }
+.admin-btn--primary:hover:not(:disabled) { background: #fbbf24; color: #060709; }
+.admin-btn--danger { background: #1a0f0f; color: #f87171; border-color: #7f1d1d; }
+.admin-btn--danger:hover:not(:disabled) { background: #2a1414; color: #fca5a5; border-color: #f87171; }
+
+.admin-table-wrap { overflow-x: auto; border: 1px solid #1e2535; border-radius: 6px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.admin-table th {
+    padding: 8px 10px; text-align: left; white-space: nowrap;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #6b7a94; background: #0d0f14; border-bottom: 1px solid #1e2535;
+}
+.admin-table td { padding: 8px 10px; border-bottom: 1px solid #111318; vertical-align: middle; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-row--open td { background: rgba(245, 158, 11, 0.06); }
+.admin-row--detail > td { background: #0a0c0f; padding: 8px 16px; }
+.admin-table--inner th, .admin-table--inner td { padding: 5px 8px; }
+
+.admin-num { text-align: right; font-variant-numeric: tabular-nums; }
+.admin-pos { color: #4ade80; }
+.admin-neg { color: #f87171; }
+.admin-muted { color: #6b7a94; font-size: 11px; }
+.admin-empty { padding: 16px; text-align: center; color: #3d4a60; font-size: 12px; }
+.admin-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.admin-payload { display: block; max-width: 420px; white-space: pre-wrap; word-break: break-all; font-size: 11px; color: #8899aa; background: none; padding: 0; }
+
+.admin-pager { display: flex; align-items: center; justify-content: space-between; }
+
+/* dialogs */
+.admin-dialog { width: min(440px, 100%); max-height: 90dvh; overflow-y: auto; }
+.admin-field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #8899aa; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.admin-textarea { min-height: 70px; padding: 8px 10px; resize: vertical; letter-spacing: normal; font-size: 13px; }

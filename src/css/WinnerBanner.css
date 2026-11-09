@@ -1,8 +1,10 @@
 .winner-banner {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    /* transform: translateX(-50%, -50%); */
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
 
     background: gold;
     color: black;
@@ -10,8 +12,9 @@
     padding: 10px 16px;
     border-radius: 8px;
 
-    font-size: 22px;
+    font-size: clamp(16px, 4vw, 22px);
     font-weight: bold;
+    text-align: center;
 
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 
@@ -28,12 +31,6 @@
 }
 
 @keyframes winnerPop {
-    from {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0;
-    }
-    to {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
+    from { transform: translateX(-50%) scale(0.8); opacity: 0; }
+    to   { transform: translateX(-50%) scale(1);   opacity: 1; }
 }

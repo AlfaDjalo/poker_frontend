@@ -5,8 +5,9 @@
     padding: 0.35rem 0.6rem;
     text-align: center;
     color: white;
-    font-size: 0.8rem;
+    font-size: clamp(0.65rem, 0.55rem + 0.5vw, 0.85rem);
     max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
     /* IMPORTANT: allow cards/hands to render outside the seat box.
        overflow: hidden was clipping large hands on the game simulator. */
@@ -30,7 +31,7 @@
 }
 
 .player-stack {
-    font-size: 0.7rem;
+    font-size: 0.88em;
     color: #ffd700;
     white-space: nowrap;
     flex-shrink: 0;

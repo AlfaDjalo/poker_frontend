@@ -2,13 +2,14 @@ import React, { useCallback } from "react";
 import {
     DndContext,
     DragOverlay,
-    PointerSensor,
-    useSensor,
-    useSensors,
+    // PointerSensor,
+    // useSensor,
+    // useSensors,
     pointerWithin,
     rectIntersection,
 } from "@dnd-kit/core";
 
+import { useDndSensors } from "../hooks/useDndSensors";
 import CardSelector from "./CardSelector";
 import DiscardPile from "./DiscardPile";
 import HandEditorControls from "./HandEditorControls";
@@ -83,12 +84,7 @@ const HandEditor = ({
 }) => {
     const [activeDrag, setActiveDrag] = React.useState(null); // { card, fromZone }
 
-        // PointerSensor with a small activation distance so clicks-without-drag
-    // still work (handled by DraggableCard's own click/drag distinction),
-    // but real drags register reliably even over small slot targets.
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
-    );
+    const sensors = useDndSensors();
 
     // ── Compute used cards (for CardSelector greying) ─────────────
     const usedCards = React.useMemo(() => {

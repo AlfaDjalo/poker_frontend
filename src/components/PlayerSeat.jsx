@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../css/PlayerSeat.css";
 import Hand from "./Hand";
 import EditableStack from "./EditableStack";
+import { useTableMetrics } from "../hooks/useFitCardWidth";
 
 /**
  * PlayerSeat
@@ -52,6 +53,7 @@ const PlayerSeat = ({
   hideEmptySeats = false,
 }) => {
 
+  const { holeScale } = useTableMetrics();
   const [draftName, setDraftName] = useState(player?.name ?? "");
 
   useEffect(() => {
@@ -155,6 +157,7 @@ const PlayerSeat = ({
           <Hand 
             seatNumber={seatNumber}
             cards={effectivePlayer.hand}
+            scale={holeScale}
             showSlots={true}
             activeSlot={activeSlot}
             onCardClick={onCardClick}
