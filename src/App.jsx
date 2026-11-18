@@ -14,6 +14,7 @@ import PlayerPicker from './components/PlayerPicker';
 import ProfilePage from './components/ProfilePage';
 import AdminPage from './components/AdminPage';
 import PinLoginModal from './components/PinLoginModal';
+import ServerWakeBanner from './components/ServerWakeBanner';
 import { ToastProvider } from './components/ToastProvider';
 import { SessionProvider, useSession } from './hooks/useSession';
 import { AuthProvider } from './hooks/useAuth';
@@ -46,6 +47,7 @@ function App() {
         <SessionProvider>
           <AuthProvider>
             <Navbar />
+            <ServerWakeBanner />
             <div className="app-shell">
               <Routes>
                 <Route path="/"                element={<GameSimulator />} />

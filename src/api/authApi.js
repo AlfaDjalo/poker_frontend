@@ -1,6 +1,8 @@
 // src/api/authApi.js
-export const API_BASE_URL = "http://localhost:8000";
-export const WS_BASE_URL = "ws://localhost:8000";
+import { API_BASE_URL, WS_BASE_URL } from "../config";
+
+// Re-exported so existing imports from authApi keep working.
+export { API_BASE_URL, WS_BASE_URL };
 
 const TOKEN_KEY = "cap.token";
 const ADMIN_KEY = "cap.isAdmin";

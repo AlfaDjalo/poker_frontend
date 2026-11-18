@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createAnnotation, updateAnnotation, deleteAnnotation } from "../api/ReplayApi";
+import { createAnnotation, updateAnnotation, deleteAnnotation } from "../api/replayAPI";
 import "../css/AnnotationPanel.css";
 
 /**

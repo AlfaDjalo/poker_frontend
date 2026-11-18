@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files with real values (keep .env.example committed)
+.env
+.env.*
+!.env.example
