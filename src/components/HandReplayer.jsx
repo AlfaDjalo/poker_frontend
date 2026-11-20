@@ -70,7 +70,7 @@ const HandReplayer = ({
         frame: currentFrame,
         handData,
         onApplied: (loadedState) => {
-            navigate("/");
+            navigate("/simulator");
         },
         onCancelled: () => { /* stay on replayer */},
     });

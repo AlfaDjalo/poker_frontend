@@ -14,7 +14,7 @@ import "../css/Navbar.css";
 // PlaceholderPage route in App.jsx) so it stops implying the feature
 // doesn't exist.
  const NAV_ITEMS = [
-     { path: "/",          label: "Game Simulator",  icon: "♠" },
+     { path: "/simulator", label: "Game Simulator",  icon: "♠" },
      { path: "/lobby",     label: "Tables",          icon: "🎲" },
      { path: "/replay",    label: "Hand Replayer",    icon: "⏪" },
      { path: "/tutorial",  label: "Tutorial",      icon: "📖" },

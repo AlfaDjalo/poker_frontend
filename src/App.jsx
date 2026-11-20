@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 
+import Landing from './components/Landing';
 import Navbar from './components/Navbar';
 import GameSimulator from './components/GameSimulator';
 import HandReplayer from './components/HandReplayer';
@@ -50,7 +51,8 @@ function App() {
             <ServerWakeBanner />
             <div className="app-shell">
               <Routes>
-                <Route path="/"                element={<GameSimulator />} />
+                <Route path="/"                element={<Landing />} />
+                <Route path="/simulator"       element={<GameSimulator />} />
                 <Route path="/replay"          element={<HandReplayer />} />
                 <Route path="/tutorial"        element={<TutorialPage />} />
                 <Route path="/tutorial/create" element={<CreationFlow />} />
